@@ -9,38 +9,122 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VendeurRouteImport } from './routes/vendeur'
+import { Route as ClientRouteImport } from './routes/client'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthVendeurRouteImport } from './routes/auth.vendeur'
+import { Route as AuthClientRouteImport } from './routes/auth.client'
 
+const VendeurRoute = VendeurRouteImport.update({
+  id: '/vendeur',
+  path: '/vendeur',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientRoute = ClientRouteImport.update({
+  id: '/client',
+  path: '/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthVendeurRoute = AuthVendeurRouteImport.update({
+  id: '/auth/vendeur',
+  path: '/auth/vendeur',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthClientRoute = AuthClientRouteImport.update({
+  id: '/auth/client',
+  path: '/auth/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/client': typeof ClientRoute
+  '/vendeur': typeof VendeurRoute
+  '/auth/client': typeof AuthClientRoute
+  '/auth/vendeur': typeof AuthVendeurRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/client': typeof ClientRoute
+  '/vendeur': typeof VendeurRoute
+  '/auth/client': typeof AuthClientRoute
+  '/auth/vendeur': typeof AuthVendeurRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/client': typeof ClientRoute
+  '/vendeur': typeof VendeurRoute
+  '/auth/client': typeof AuthClientRoute
+  '/auth/vendeur': typeof AuthVendeurRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/client'
+    | '/vendeur'
+    | '/auth/client'
+    | '/auth/vendeur'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/admin' | '/client' | '/vendeur' | '/auth/client' | '/auth/vendeur'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/client'
+    | '/vendeur'
+    | '/auth/client'
+    | '/auth/vendeur'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ClientRoute: typeof ClientRoute
+  VendeurRoute: typeof VendeurRoute
+  AuthClientRoute: typeof AuthClientRoute
+  AuthVendeurRoute: typeof AuthVendeurRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vendeur': {
+      id: '/vendeur'
+      path: '/vendeur'
+      fullPath: '/vendeur'
+      preLoaderRoute: typeof VendeurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client': {
+      id: '/client'
+      path: '/client'
+      fullPath: '/client'
+      preLoaderRoute: typeof ClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +132,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/vendeur': {
+      id: '/auth/vendeur'
+      path: '/auth/vendeur'
+      fullPath: '/auth/vendeur'
+      preLoaderRoute: typeof AuthVendeurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/client': {
+      id: '/auth/client'
+      path: '/auth/client'
+      fullPath: '/auth/client'
+      preLoaderRoute: typeof AuthClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ClientRoute: ClientRoute,
+  VendeurRoute: VendeurRoute,
+  AuthClientRoute: AuthClientRoute,
+  AuthVendeurRoute: AuthVendeurRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
