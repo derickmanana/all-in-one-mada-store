@@ -92,7 +92,7 @@ function VendorsManager() {
   }
   useEffect(() => { load(); }, []);
   async function update(id: string, status: string) {
-    const { error } = await supabase.from("vendor_profiles").update({ status }).eq("id", id);
+    const { error } = await supabase.from("vendor_profiles").update({ status: status as any }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Statut mis à jour");
     load();
@@ -126,7 +126,7 @@ function DepositsManager() {
   useEffect(() => { load(); }, []);
 
   async function review(id: string, approve: boolean) {
-    const { error } = await supabase.rpc("admin_validate_deposit", { _deposit_id: id, _approve: approve, _note: note[id] || null });
+    const { error } = await supabase.rpc("admin_validate_deposit", { _deposit_id: id, _approve: approve, _note: note[id] || undefined });
     if (error) return toast.error(error.message);
     toast.success(approve ? "Crédité ✅" : "Rejeté");
     load();

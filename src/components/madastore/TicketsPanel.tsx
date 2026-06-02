@@ -61,7 +61,7 @@ export function TicketsPanel({ userId, isAdmin = false }: { userId: string; isAd
 
   async function setStatus(s: string) {
     if (!selected) return;
-    await supabase.from("tickets").update({ status: s }).eq("id", selected.id);
+    await supabase.from("tickets").update({ status: s as any }).eq("id", selected.id);
     setSelected({ ...selected, status: s });
     load();
   }

@@ -52,7 +52,7 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   }, [userId, role]);
 
   async function updateStatus(id: string, status: string) {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    const { error } = await supabase.from("orders").update({ status: status as any }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Statut mis à jour");
     load();
