@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       client_profiles: {
         Row: {
           address: string | null
@@ -41,6 +65,308 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          last_message_at: string
+          vendor_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          vendor_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      deposits: {
+        Row: {
+          admin_note: string | null
+          amount_mga: number
+          created_at: string
+          id: string
+          method: string
+          proof_url: string
+          reference: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["deposit_status"]
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_mga: number
+          created_at?: string
+          id?: string
+          method: string
+          proof_url: string
+          reference?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["deposit_status"]
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_mga?: number
+          created_at?: string
+          id?: string
+          method?: string
+          proof_url?: string
+          reference?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["deposit_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          product_id: string
+          product_image: string | null
+          product_title: string
+          quantity: number
+          shipping_address: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_mga: number
+          unit_price_mga: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          product_image?: string | null
+          product_title: string
+          quantity: number
+          shipping_address?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_mga: number
+          unit_price_mga: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          product_image?: string | null
+          product_title?: string
+          quantity?: number
+          shipping_address?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_mga?: number
+          unit_price_mga?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          images: string[]
+          is_active: boolean
+          price_mga: number
+          price_usdt: number | null
+          stock: number
+          title: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          price_mga: number
+          price_usdt?: number | null
+          stock?: number
+          title: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          price_mga?: number
+          price_usdt?: number | null
+          stock?: number
+          title?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_admin: boolean
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -104,11 +430,63 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount_mga: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount_mga: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount_mga?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type?: Database["public"]["Enums"]["tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance_mga: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_mga?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_mga?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_validate_deposit: {
+        Args: { _approve: boolean; _deposit_id: string; _note?: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -116,9 +494,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      place_order: {
+        Args: { _address: string; _product_id: string; _quantity: number }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "vendeur" | "client"
+      deposit_status: "en_attente" | "valide" | "rejete"
+      order_status:
+        | "en_attente"
+        | "paye"
+        | "expedie"
+        | "livre"
+        | "annule"
+        | "rembourse"
+      ticket_status: "ouvert" | "en_cours" | "resolu" | "ferme"
+      tx_type: "depot" | "achat" | "vente" | "remboursement" | "commission"
       vendor_status: "en_attente" | "actif" | "rejete"
     }
     CompositeTypes: {
@@ -248,6 +640,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "vendeur", "client"],
+      deposit_status: ["en_attente", "valide", "rejete"],
+      order_status: [
+        "en_attente",
+        "paye",
+        "expedie",
+        "livre",
+        "annule",
+        "rembourse",
+      ],
+      ticket_status: ["ouvert", "en_cours", "resolu", "ferme"],
+      tx_type: ["depot", "achat", "vente", "remboursement", "commission"],
       vendor_status: ["en_attente", "actif", "rejete"],
     },
   },
