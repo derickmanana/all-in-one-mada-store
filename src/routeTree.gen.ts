@@ -13,6 +13,7 @@ import { Route as VendeurRouteImport } from './routes/vendeur'
 import { Route as ClientRouteImport } from './routes/client'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as AuthVendeurRouteImport } from './routes/auth.vendeur'
 import { Route as AuthClientRouteImport } from './routes/auth.client'
 
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductIdRoute = ProductIdRouteImport.update({
+  id: '/product/$id',
+  path: '/product/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthVendeurRoute = AuthVendeurRouteImport.update({
   id: '/auth/vendeur',
   path: '/auth/vendeur',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +90,16 @@ export interface FileRouteTypes {
     | '/vendeur'
     | '/auth/client'
     | '/auth/vendeur'
+    | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/client' | '/vendeur' | '/auth/client' | '/auth/vendeur'
+  to:
+    | '/'
+    | '/admin'
+    | '/client'
+    | '/vendeur'
+    | '/auth/client'
+    | '/auth/vendeur'
+    | '/product/$id'
   id:
     | '__root__'
     | '/'
@@ -91,6 +108,7 @@ export interface FileRouteTypes {
     | '/vendeur'
     | '/auth/client'
     | '/auth/vendeur'
+    | '/product/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,6 +118,7 @@ export interface RootRouteChildren {
   VendeurRoute: typeof VendeurRoute
   AuthClientRoute: typeof AuthClientRoute
   AuthVendeurRoute: typeof AuthVendeurRoute
+  ProductIdRoute: typeof ProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -132,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/$id': {
+      id: '/product/$id'
+      path: '/product/$id'
+      fullPath: '/product/$id'
+      preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/vendeur': {
       id: '/auth/vendeur'
       path: '/auth/vendeur'
@@ -156,7 +182,18 @@ const rootRouteChildren: RootRouteChildren = {
   VendeurRoute: VendeurRoute,
   AuthClientRoute: AuthClientRoute,
   AuthVendeurRoute: AuthVendeurRoute,
+  ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
