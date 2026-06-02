@@ -2,136 +2,166 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ProtectedShell } from "@/components/madastore/ProtectedShell";
+import { TabNav } from "@/components/madastore/TabNav";
+import { TicketsPanel } from "@/components/madastore/TicketsPanel";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-
-type Vendor = {
-  id: string;
-  shop_name: string;
-  phone: string;
-  status: "en_attente" | "actif" | "rejete";
-  created_at: string;
-};
+import { formatMGA } from "@/components/madastore/Money";
+import { Store, Wallet, LifeBuoy, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
+const TABS = [
+  { id: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
+  { id: "vendors", label: "Vendeurs", icon: <Store className="h-5 w-5" /> },
+  { id: "deposits", label: "Dépôts", icon: <Wallet className="h-5 w-5" /> },
+  { id: "tickets", label: "Tickets", icon: <LifeBuoy className="h-5 w-5" /> },
+];
+
 function AdminPage() {
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function load() {
-    setLoading(true);
-    const { data } = await supabase
-      .from("vendor_profiles")
-      .select("id, shop_name, phone, status, created_at")
-      .order("created_at", { ascending: false });
-    setVendors((data ?? []) as Vendor[]);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function updateStatus(id: string, status: Vendor["status"]) {
-    const { error } = await supabase.from("vendor_profiles").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Statut mis à jour");
-    load();
-  }
-
+  const [tab, setTab] = useState("stats");
+  const { user } = useAuth();
   return (
     <ProtectedShell expectedRole="admin" title="Admin Console">
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-gradient-red p-6 text-primary-foreground shadow-glow-red">
-          <h1 className="text-2xl font-black">Console Administrateur</h1>
-          <p className="text-sm opacity-90 mt-1">
-            Validation des vendeurs et modération de la plateforme.
-          </p>
-        </div>
-
-        <section className="rounded-3xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-black">Vendeurs ({vendors.length})</h2>
-            <button
-              onClick={load}
-              className="text-xs font-semibold text-mada-red hover:underline"
-            >
-              Rafraîchir
-            </button>
-          </div>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Chargement...</p>
-          ) : vendors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun vendeur inscrit pour le moment.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-4">Boutique</th>
-                    <th className="py-2 pr-4">Téléphone</th>
-                    <th className="py-2 pr-4">Statut</th>
-                    <th className="py-2 pr-4">Inscription</th>
-                    <th className="py-2 pr-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendors.map((v) => (
-                    <tr key={v.id} className="border-b border-border/60 last:border-0">
-                      <td className="py-3 pr-4 font-semibold">{v.shop_name}</td>
-                      <td className="py-3 pr-4 text-muted-foreground">{v.phone || "—"}</td>
-                      <td className="py-3 pr-4">
-                        <StatusBadge status={v.status} />
-                      </td>
-                      <td className="py-3 pr-4 text-muted-foreground">
-                        {new Date(v.created_at).toLocaleDateString("fr-FR")}
-                      </td>
-                      <td className="py-3 pr-4 text-right space-x-2">
-                        {v.status !== "actif" && (
-                          <button
-                            onClick={() => updateStatus(v.id, "actif")}
-                            className="rounded-lg bg-mada-green px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:opacity-90"
-                          >
-                            Activer
-                          </button>
-                        )}
-                        {v.status !== "rejete" && (
-                          <button
-                            onClick={() => updateStatus(v.id, "rejete")}
-                            className="rounded-lg border border-destructive text-destructive px-3 py-1.5 text-xs font-bold hover:bg-destructive hover:text-destructive-foreground"
-                          >
-                            Rejeter
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+      <div className="mb-4 rounded-2xl bg-gradient-red p-5 text-primary-foreground shadow-glow-red">
+        <h1 className="text-xl font-black">🔒 Console Administrateur</h1>
+        <p className="text-xs opacity-90">Contrôle total de la plateforme ALL IN ONE MADA STORE</p>
+      </div>
+      <TabNav tabs={TABS} active={tab} onChange={setTab} />
+      <div className="mt-2 pb-20 md:pb-0">
+        {tab === "stats" && <Stats />}
+        {tab === "vendors" && <VendorsManager />}
+        {tab === "deposits" && <DepositsManager />}
+        {user && tab === "tickets" && <TicketsPanel userId={user.id} isAdmin />}
       </div>
     </ProtectedShell>
   );
 }
 
-function StatusBadge({ status }: { status: Vendor["status"] }) {
-  const styles: Record<Vendor["status"], string> = {
-    en_attente: "bg-yellow-100 text-yellow-800",
-    actif: "bg-mada-green/15 text-mada-green",
-    rejete: "bg-destructive/15 text-destructive",
-  };
-  const labels: Record<Vendor["status"], string> = {
-    en_attente: "En attente",
-    actif: "Actif",
-    rejete: "Rejeté",
-  };
+function Stats() {
+  const [s, setS] = useState({ vendors: 0, products: 0, orders: 0, deposits: 0, gmv: 0 });
+  useEffect(() => {
+    (async () => {
+      const [v, p, o, d, gmv] = await Promise.all([
+        supabase.from("vendor_profiles").select("id", { count: "exact", head: true }),
+        supabase.from("products").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
+        supabase.from("deposits").select("id", { count: "exact", head: true }).eq("status", "en_attente"),
+        supabase.from("orders").select("total_mga").eq("status", "paye"),
+      ]);
+      setS({
+        vendors: v.count ?? 0,
+        products: p.count ?? 0,
+        orders: o.count ?? 0,
+        deposits: d.count ?? 0,
+        gmv: (gmv.data ?? []).reduce((a: number, x: any) => a + Number(x.total_mga), 0),
+      });
+    })();
+  }, []);
+  const cards = [
+    { label: "Vendeurs", value: s.vendors, color: "from-mada-red to-pink-500" },
+    { label: "Produits", value: s.products, color: "from-mada-green to-emerald-500" },
+    { label: "Commandes", value: s.orders, color: "from-blue-500 to-indigo-600" },
+    { label: "Dépôts en attente", value: s.deposits, color: "from-yellow-500 to-orange-500" },
+  ];
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${styles[status]}`}>
-      {labels[status]}
-    </span>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {cards.map((c) => (
+          <div key={c.label} className={`rounded-2xl bg-gradient-to-br ${c.color} p-4 text-white`}>
+            <div className="text-xs font-bold uppercase opacity-90">{c.label}</div>
+            <div className="mt-1 text-3xl font-black">{c.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="text-xs font-bold uppercase text-muted-foreground">Volume d'affaires (commandes payées)</div>
+        <div className="mt-2 text-3xl font-black text-mada-red">{formatMGA(s.gmv)}</div>
+      </div>
+    </div>
+  );
+}
+
+function VendorsManager() {
+  const [vs, setVs] = useState<any[]>([]);
+  async function load() {
+    const { data } = await supabase.from("vendor_profiles").select("*").order("created_at", { ascending: false });
+    setVs(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+  async function update(id: string, status: string) {
+    const { error } = await supabase.from("vendor_profiles").update({ status: status as any }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Statut mis à jour");
+    load();
+  }
+  return (
+    <div className="space-y-2">
+      {vs.map((v) => (
+        <div key={v.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
+          <div>
+            <div className="font-bold text-sm">{v.shop_name}</div>
+            <div className="text-xs text-muted-foreground">{v.phone} · {v.status}</div>
+          </div>
+          <div className="flex gap-1">
+            {v.status !== "actif" && <button onClick={() => update(v.id, "actif")} className="rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">Activer</button>}
+            {v.status !== "rejete" && <button onClick={() => update(v.id, "rejete")} className="rounded-lg border border-destructive px-3 py-1 text-xs font-bold text-destructive">Rejeter</button>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DepositsManager() {
+  const [deps, setDeps] = useState<any[]>([]);
+  const [note, setNote] = useState<Record<string, string>>({});
+
+  async function load() {
+    const { data } = await supabase.from("deposits").select("*").order("created_at", { ascending: false }).limit(100);
+    setDeps(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function review(id: string, approve: boolean) {
+    const { error } = await supabase.rpc("admin_validate_deposit", { _deposit_id: id, _approve: approve, _note: note[id] || undefined });
+    if (error) return toast.error(error.message);
+    toast.success(approve ? "Crédité ✅" : "Rejeté");
+    load();
+  }
+
+  async function viewProof(path: string) {
+    const { data } = await supabase.storage.from("proofs").createSignedUrl(path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  }
+
+  return (
+    <div className="space-y-3">
+      {deps.length === 0 && <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Aucun dépôt.</div>}
+      {deps.map((d) => (
+        <div key={d.id} className="rounded-2xl border border-border bg-card p-4 space-y-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="font-black text-lg text-mada-red">{formatMGA(d.amount_mga)}</div>
+              <div className="text-xs text-muted-foreground">{d.method} · {d.reference ?? "Sans réf"} · {new Date(d.created_at).toLocaleString("fr-FR")}</div>
+            </div>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${d.status === "valide" ? "bg-mada-green/15 text-mada-green" : d.status === "rejete" ? "bg-destructive/15 text-destructive" : "bg-yellow-100 text-yellow-800"}`}>{d.status}</span>
+          </div>
+          <button onClick={() => viewProof(d.proof_url)} className="text-xs font-bold text-mada-red underline">Voir la preuve</button>
+          {d.status === "en_attente" && (
+            <>
+              <input value={note[d.id] ?? ""} onChange={(e) => setNote({ ...note, [d.id]: e.target.value })} placeholder="Note (optionnel)" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs" />
+              <div className="flex gap-2">
+                <button onClick={() => review(d.id, true)} className="flex-1 rounded-xl bg-mada-green py-2 text-xs font-black text-secondary-foreground">Valider et créditer</button>
+                <button onClick={() => review(d.id, false)} className="flex-1 rounded-xl border border-destructive py-2 text-xs font-black text-destructive">Rejeter</button>
+              </div>
+            </>
+          )}
+          {d.admin_note && <div className="rounded-lg bg-muted p-2 text-xs">Note: {d.admin_note}</div>}
+        </div>
+      ))}
+    </div>
   );
 }
