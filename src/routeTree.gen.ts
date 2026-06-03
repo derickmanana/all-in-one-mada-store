@@ -14,8 +14,8 @@ import { Route as ClientRouteImport } from './routes/client'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as AuthVendeurRouteImport } from './routes/auth.vendeur'
-import { Route as AuthClientRouteImport } from './routes/auth.client'
+import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
+import { Route as AuthClientRouteImport } from './routes/auth/client'
 
 const VendeurRoute = VendeurRouteImport.update({
   id: '/vendeur',
