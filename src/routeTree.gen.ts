@@ -14,8 +14,8 @@ import { Route as ClientRouteImport } from './routes/client'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as AuthVendeurRouteImport } from './routes/auth.vendeur'
-import { Route as AuthClientRouteImport } from './routes/auth.client'
+import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
+import { Route as AuthClientRouteImport } from './routes/auth/client'
 
 const VendeurRoute = VendeurRouteImport.update({
   id: '/vendeur',
@@ -187,3 +187,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
