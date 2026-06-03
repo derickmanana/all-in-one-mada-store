@@ -78,14 +78,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "All in One Mada Store" },
+      { name: "description", content: "Toerana fivarotana sy Fividianana hoan'ny Malagasy rehetra" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "All in One Mada Store" },
+      { property: "og:description", content: "Toerana fivarotana sy Fividianana hoan'ny Malagasy rehetra" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "All in One Mada Store" },
+      { name: "twitter:description", content: "Toerana fivarotana sy Fividianana hoan'ny Malagasy rehetra" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/otxuy4bIyccB4k1uKPniLvtkpsh1/social-images/social-1780468770649-ChatGPT_Image_Jun_3,_2026,_09_33_57_AM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/otxuy4bIyccB4k1uKPniLvtkpsh1/social-images/social-1780468770649-ChatGPT_Image_Jun_3,_2026,_09_33_57_AM.webp" },
     ],
     links: [
       {
