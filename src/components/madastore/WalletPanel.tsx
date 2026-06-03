@@ -22,7 +22,7 @@ export function WalletPanel({ userId }: { userId: string }) {
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState(PAYMENT_METHODS[0].key);
+  const [method, setMethod] = useState<string>(PAYMENT_METHODS[0].key);
   const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
