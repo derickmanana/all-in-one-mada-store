@@ -252,6 +252,57 @@ export type Database = {
           },
         ]
       }
+      product_comments: {
+        Row: {
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_likes: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          reaction?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
@@ -265,7 +316,9 @@ export type Database = {
           stock: number
           title: string
           updated_at: string
+          variants: Json
           vendor_id: string
+          video_url: string | null
         }
         Insert: {
           category_id?: string | null
@@ -279,7 +332,9 @@ export type Database = {
           stock?: number
           title: string
           updated_at?: string
+          variants?: Json
           vendor_id: string
+          video_url?: string | null
         }
         Update: {
           category_id?: string | null
@@ -293,7 +348,9 @@ export type Database = {
           stock?: number
           title?: string
           updated_at?: string
+          variants?: Json
           vendor_id?: string
+          video_url?: string | null
         }
         Relationships: [
           {
