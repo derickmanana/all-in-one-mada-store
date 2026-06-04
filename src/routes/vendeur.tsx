@@ -4,7 +4,7 @@ import { ProtectedShell } from "@/components/madastore/ProtectedShell";
 import { TabNav } from "@/components/madastore/TabNav";
 import { VendorProductsManager } from "@/components/madastore/VendorProductsManager";
 import { OrdersList } from "@/components/madastore/OrdersList";
-import { WalletPanel } from "@/components/madastore/WalletPanel";
+import { VendorWalletPanel } from "@/components/madastore/VendorWalletPanel";
 import { MessagesPanel } from "@/components/madastore/MessagesPanel";
 import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { SupportChat } from "@/components/madastore/SupportChat";
