@@ -12,6 +12,7 @@ const PAYMENT_METHODS = [
   { key: "Orange Money", label: "Orange Money", number: "0376324415", holder: "Jean Noel", color: "bg-orange-100 text-orange-900" },
   { key: "Airtel Money", label: "Airtel Money", number: "0339781423", holder: "Jean Noel", color: "bg-red-100 text-red-900" },
   { key: "Binance", label: "Binance UID", number: "1028468482", holder: "USDT (BEP20/TRC20)", color: "bg-amber-100 text-amber-900" },
+  { key: "VISA", label: "Carte VISA", number: "Contact admin", holder: "Paiement par carte", color: "bg-indigo-100 text-indigo-900" },
 ] as const;
 
 const MAX_PROOF_MB = 15;
