@@ -11,6 +11,9 @@ type Order = {
   total_mga: number;
   status: string;
   created_at: string;
+  vendor_released?: boolean;
+  buyer_confirmed_at?: string | null;
+  auto_release_at?: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -40,10 +43,10 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
     const col = role === "client" ? "client_id" : "vendor_id";
     const { data } = await supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at")
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at" as any)
       .eq(col, userId)
       .order("created_at", { ascending: false });
-    setOrders((data ?? []) as Order[]);
+    setOrders((data ?? []) as any);
     setLoading(false);
   }
 
@@ -89,6 +92,25 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
               <button onClick={() => updateStatus(o.id, "livre")} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
                 Marquer livrée
               </button>
+            )}
+            {role === "client" && !o.vendor_released && (o.status === "expedie" || o.status === "livre" || o.status === "paye") && (
+              <button
+                onClick={async () => {
+                  const { error } = await supabase.rpc("confirm_delivery" as any, { _order_id: o.id });
+                  if (error) return toast.error(error.message);
+                  toast.success("Merci ! Le vendeur sera payé ✅");
+                  load();
+                }}
+                className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground"
+              >
+                ✅ Produit reçu
+              </button>
+            )}
+            {o.vendor_released && (
+              <div className="mt-1 text-[10px] font-bold text-mada-green">Fonds vendeur débloqués</div>
+            )}
+            {role === "vendeur" && !o.vendor_released && o.auto_release_at && (
+              <div className="mt-1 text-[10px] text-muted-foreground">Auto-libération: {new Date(o.auto_release_at).toLocaleDateString("fr-FR")}</div>
             )}
           </div>
         </div>

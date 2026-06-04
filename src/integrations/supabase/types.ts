@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          auto_release_days: number
+          commission_rate: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          auto_release_days?: number
+          commission_rate?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_release_days?: number
+          commission_rate?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -198,49 +219,67 @@ export type Database = {
       }
       orders: {
         Row: {
+          auto_release_at: string | null
+          buyer_confirmed_at: string | null
           client_id: string
+          commission_mga: number
           created_at: string
           id: string
           product_id: string
           product_image: string | null
           product_title: string
           quantity: number
+          released_at: string | null
           shipping_address: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_mga: number
           unit_price_mga: number
           updated_at: string
+          vendor_amount_mga: number
           vendor_id: string
+          vendor_released: boolean
         }
         Insert: {
+          auto_release_at?: string | null
+          buyer_confirmed_at?: string | null
           client_id: string
+          commission_mga?: number
           created_at?: string
           id?: string
           product_id: string
           product_image?: string | null
           product_title: string
           quantity: number
+          released_at?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga: number
           unit_price_mga: number
           updated_at?: string
+          vendor_amount_mga?: number
           vendor_id: string
+          vendor_released?: boolean
         }
         Update: {
+          auto_release_at?: string | null
+          buyer_confirmed_at?: string | null
           client_id?: string
+          commission_mga?: number
           created_at?: string
           id?: string
           product_id?: string
           product_image?: string | null
           product_title?: string
           quantity?: number
+          released_at?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga?: number
           unit_price_mga?: number
           updated_at?: string
+          vendor_amount_mga?: number
           vendor_id?: string
+          vendor_released?: boolean
         }
         Relationships: [
           {
@@ -519,18 +558,72 @@ export type Database = {
       }
       wallets: {
         Row: {
+          balance_admin_funds_mga: number
+          balance_commission_mga: number
           balance_mga: number
+          balance_pending_mga: number
+          balance_spent_mga: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          balance_admin_funds_mga?: number
+          balance_commission_mga?: number
           balance_mga?: number
+          balance_pending_mga?: number
+          balance_spent_mga?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          balance_admin_funds_mga?: number
+          balance_commission_mga?: number
           balance_mga?: number
+          balance_pending_mga?: number
+          balance_spent_mga?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_holder: string | null
+          account_number: string
+          admin_note: string | null
+          amount_mga: number
+          created_at: string
+          id: string
+          method: string
+          reference: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["deposit_status"]
+          user_id: string
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number: string
+          admin_note?: string | null
+          amount_mga: number
+          created_at?: string
+          id?: string
+          method: string
+          reference?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["deposit_status"]
+          user_id: string
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string
+          admin_note?: string | null
+          amount_mga?: number
+          created_at?: string
+          id?: string
+          method?: string
+          reference?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["deposit_status"]
           user_id?: string
         }
         Relationships: []
@@ -540,10 +633,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _release_order: {
+        Args: { _order_id: string; _reason: string }
+        Returns: undefined
+      }
+      admin_release_order: {
+        Args: { _note?: string; _order_id: string }
+        Returns: undefined
+      }
+      admin_send_to_client: {
+        Args: { _amount: number; _client_id: string; _note?: string }
+        Returns: undefined
+      }
+      admin_transfer_funds: {
+        Args: { _amount: number; _direction: string }
+        Returns: undefined
+      }
       admin_validate_deposit: {
         Args: { _approve: boolean; _deposit_id: string; _note?: string }
         Returns: undefined
       }
+      admin_validate_withdrawal: {
+        Args: { _approve: boolean; _id: string; _note?: string }
+        Returns: undefined
+      }
+      auto_release_orders: { Args: never; Returns: number }
+      confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -553,6 +668,15 @@ export type Database = {
       }
       place_order: {
         Args: { _address: string; _product_id: string; _quantity: number }
+        Returns: string
+      }
+      request_withdrawal: {
+        Args: {
+          _account: string
+          _amount: number
+          _holder?: string
+          _method: string
+        }
         Returns: string
       }
     }
@@ -567,7 +691,18 @@ export type Database = {
         | "annule"
         | "rembourse"
       ticket_status: "ouvert" | "en_cours" | "resolu" | "ferme"
-      tx_type: "depot" | "achat" | "vente" | "remboursement" | "commission"
+      tx_type:
+        | "depot"
+        | "achat"
+        | "vente"
+        | "remboursement"
+        | "commission"
+        | "vendor_pending"
+        | "vendor_release"
+        | "retrait"
+        | "retrait_refus"
+        | "transfert_admin"
+        | "envoi_admin"
       vendor_status: "en_attente" | "actif" | "rejete"
     }
     CompositeTypes: {
@@ -707,7 +842,19 @@ export const Constants = {
         "rembourse",
       ],
       ticket_status: ["ouvert", "en_cours", "resolu", "ferme"],
-      tx_type: ["depot", "achat", "vente", "remboursement", "commission"],
+      tx_type: [
+        "depot",
+        "achat",
+        "vente",
+        "remboursement",
+        "commission",
+        "vendor_pending",
+        "vendor_release",
+        "retrait",
+        "retrait_refus",
+        "transfert_admin",
+        "envoi_admin",
+      ],
       vendor_status: ["en_attente", "actif", "rejete"],
     },
   },

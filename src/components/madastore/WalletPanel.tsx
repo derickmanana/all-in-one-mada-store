@@ -12,12 +12,14 @@ const PAYMENT_METHODS = [
   { key: "Orange Money", label: "Orange Money", number: "0376324415", holder: "Jean Noel", color: "bg-orange-100 text-orange-900" },
   { key: "Airtel Money", label: "Airtel Money", number: "0339781423", holder: "Jean Noel", color: "bg-red-100 text-red-900" },
   { key: "Binance", label: "Binance UID", number: "1028468482", holder: "USDT (BEP20/TRC20)", color: "bg-amber-100 text-amber-900" },
+  { key: "VISA", label: "Carte VISA", number: "Contact admin", holder: "Paiement par carte", color: "bg-indigo-100 text-indigo-900" },
 ] as const;
 
 const MAX_PROOF_MB = 15;
 
 export function WalletPanel({ userId }: { userId: string }) {
   const [balance, setBalance] = useState<number>(0);
+  const [spent, setSpent] = useState<number>(0);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -30,11 +32,12 @@ export function WalletPanel({ userId }: { userId: string }) {
 
   async function load() {
     const [w, t, d] = await Promise.all([
-      supabase.from("wallets").select("balance_mga").eq("user_id", userId).maybeSingle(),
+      supabase.from("wallets").select("balance_mga, balance_spent_mga" as any).eq("user_id", userId).maybeSingle(),
       supabase.from("wallet_transactions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
       supabase.from("deposits").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
     ]);
-    setBalance(Number(w.data?.balance_mga ?? 0));
+    setBalance(Number((w.data as any)?.balance_mga ?? 0));
+    setSpent(Number((w.data as any)?.balance_spent_mga ?? 0));
     setTxs((t.data ?? []) as Tx[]);
     setDeposits((d.data ?? []) as Deposit[]);
   }
@@ -99,6 +102,12 @@ export function WalletPanel({ userId }: { userId: string }) {
         >
           <Upload className="h-4 w-4" /> {showForm ? "Annuler" : "Dépôt"}
         </button>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="text-[10px] font-bold uppercase text-muted-foreground">📊 Historique dépensé</div>
+        <div className="mt-1 text-2xl font-black text-mada-red">{formatMGA(spent)}</div>
+        <div className="text-xs text-muted-foreground">Total des achats effectués</div>
       </div>
 
       {showForm && (

@@ -7,7 +7,8 @@ import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMGA } from "@/components/madastore/Money";
-import { Store, Wallet, LifeBuoy, BarChart3 } from "lucide-react";
+import { Store, Wallet, LifeBuoy, BarChart3, ArrowDownToLine } from "lucide-react";
+import { AdminWalletPanel } from "@/components/madastore/AdminWalletPanel";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -17,6 +18,7 @@ const TABS = [
   { id: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
   { id: "vendors", label: "Vendeurs", icon: <Store className="h-5 w-5" /> },
   { id: "deposits", label: "Dépôts", icon: <Wallet className="h-5 w-5" /> },
+  { id: "wallet", label: "Wallet", icon: <ArrowDownToLine className="h-5 w-5" /> },
   { id: "tickets", label: "Tickets", icon: <LifeBuoy className="h-5 w-5" /> },
 ];
 
@@ -34,6 +36,7 @@ function AdminPage() {
         {tab === "stats" && <Stats />}
         {tab === "vendors" && <VendorsManager />}
         {tab === "deposits" && <DepositsManager />}
+        {user && tab === "wallet" && <AdminWalletPanel userId={user.id} />}
         {user && tab === "tickets" && <TicketsPanel userId={user.id} isAdmin />}
       </div>
     </ProtectedShell>
