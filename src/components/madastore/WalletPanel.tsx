@@ -104,6 +104,12 @@ export function WalletPanel({ userId }: { userId: string }) {
         </button>
       </div>
 
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="text-[10px] font-bold uppercase text-muted-foreground">📊 Historique dépensé</div>
+        <div className="mt-1 text-2xl font-black text-mada-red">{formatMGA(spent)}</div>
+        <div className="text-xs text-muted-foreground">Total des achats effectués</div>
+      </div>
+
       {showForm && (
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <h3 className="font-black">Nouveau dépôt</h3>
