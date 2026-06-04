@@ -32,11 +32,12 @@ export function WalletPanel({ userId }: { userId: string }) {
 
   async function load() {
     const [w, t, d] = await Promise.all([
-      supabase.from("wallets").select("balance_mga").eq("user_id", userId).maybeSingle(),
+      supabase.from("wallets").select("balance_mga, balance_spent_mga" as any).eq("user_id", userId).maybeSingle(),
       supabase.from("wallet_transactions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
       supabase.from("deposits").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
     ]);
-    setBalance(Number(w.data?.balance_mga ?? 0));
+    setBalance(Number((w.data as any)?.balance_mga ?? 0));
+    setSpent(Number((w.data as any)?.balance_spent_mga ?? 0));
     setTxs((t.data ?? []) as Tx[]);
     setDeposits((d.data ?? []) as Deposit[]);
   }
