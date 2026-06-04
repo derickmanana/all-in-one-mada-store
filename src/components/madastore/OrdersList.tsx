@@ -43,10 +43,10 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
     const col = role === "client" ? "client_id" : "vendor_id";
     const { data } = await supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at")
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at" as any)
       .eq(col, userId)
       .order("created_at", { ascending: false });
-    setOrders((data ?? []) as Order[]);
+    setOrders((data ?? []) as any);
     setLoading(false);
   }
 
