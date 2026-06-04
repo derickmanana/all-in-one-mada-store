@@ -11,6 +11,9 @@ type Order = {
   total_mga: number;
   status: string;
   created_at: string;
+  vendor_released?: boolean;
+  buyer_confirmed_at?: string | null;
+  auto_release_at?: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
