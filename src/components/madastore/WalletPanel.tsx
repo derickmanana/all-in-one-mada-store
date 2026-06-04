@@ -19,6 +19,7 @@ const MAX_PROOF_MB = 15;
 
 export function WalletPanel({ userId }: { userId: string }) {
   const [balance, setBalance] = useState<number>(0);
+  const [spent, setSpent] = useState<number>(0);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [showForm, setShowForm] = useState(false);
