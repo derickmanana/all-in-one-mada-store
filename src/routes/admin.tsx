@@ -18,6 +18,7 @@ const TABS = [
   { id: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
   { id: "vendors", label: "Vendeurs", icon: <Store className="h-5 w-5" /> },
   { id: "deposits", label: "Dépôts", icon: <Wallet className="h-5 w-5" /> },
+  { id: "wallet", label: "Wallet", icon: <ArrowDownToLine className="h-5 w-5" /> },
   { id: "tickets", label: "Tickets", icon: <LifeBuoy className="h-5 w-5" /> },
 ];
 
