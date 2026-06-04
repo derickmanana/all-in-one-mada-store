@@ -93,6 +93,25 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
                 Marquer livrée
               </button>
             )}
+            {role === "client" && !o.vendor_released && (o.status === "expedie" || o.status === "livre" || o.status === "paye") && (
+              <button
+                onClick={async () => {
+                  const { error } = await supabase.rpc("confirm_delivery" as any, { _order_id: o.id });
+                  if (error) return toast.error(error.message);
+                  toast.success("Merci ! Le vendeur sera payé ✅");
+                  load();
+                }}
+                className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground"
+              >
+                ✅ Produit reçu
+              </button>
+            )}
+            {o.vendor_released && (
+              <div className="mt-1 text-[10px] font-bold text-mada-green">Fonds vendeur débloqués</div>
+            )}
+            {role === "vendeur" && !o.vendor_released && o.auto_release_at && (
+              <div className="mt-1 text-[10px] text-muted-foreground">Auto-libération: {new Date(o.auto_release_at).toLocaleDateString("fr-FR")}</div>
+            )}
           </div>
         </div>
       ))}
