@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendeurRouteImport } from './routes/vendeur'
 import { Route as ClientRouteImport } from './routes/client'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
@@ -25,6 +26,11 @@ const VendeurRoute = VendeurRouteImport.update({
 const ClientRoute = ClientRouteImport.update({
   id: '/client',
   path: '/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -56,6 +62,7 @@ const AuthClientRoute = AuthClientRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/client': typeof ClientRoute
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/client': typeof ClientRoute
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/client': typeof ClientRoute
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/cart'
     | '/client'
     | '/vendeur'
     | '/auth/client'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/cart'
     | '/client'
     | '/vendeur'
     | '/auth/client'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/cart'
     | '/client'
     | '/vendeur'
     | '/auth/client'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  CartRoute: typeof CartRoute
   ClientRoute: typeof ClientRoute
   VendeurRoute: typeof VendeurRoute
   AuthClientRoute: typeof AuthClientRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/client'
       fullPath: '/client'
       preLoaderRoute: typeof ClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  CartRoute: CartRoute,
   ClientRoute: ClientRoute,
   VendeurRoute: VendeurRoute,
   AuthClientRoute: AuthClientRoute,
