@@ -5,23 +5,23 @@ import { TabNav } from "@/components/madastore/TabNav";
 import { VendorProductsManager } from "@/components/madastore/VendorProductsManager";
 import { OrdersList } from "@/components/madastore/OrdersList";
 import { VendorWalletPanel } from "@/components/madastore/VendorWalletPanel";
+import { VendorPickupForm } from "@/components/madastore/VendorPickupForm";
 import { MessagesPanel } from "@/components/madastore/MessagesPanel";
 import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { SupportChat } from "@/components/madastore/SupportChat";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, ShoppingCart, Wallet, MessageCircle, Sparkles, LifeBuoy } from "lucide-react";
+import { Package, ShoppingCart, Wallet, MessageCircle, Sparkles, LifeBuoy, MapPin } from "lucide-react";
 
 type Status = "en_attente" | "actif" | "rejete";
 
-export const Route = createFileRoute("/vendeur")({
-  component: VendeurPage,
-});
+export const Route = createFileRoute("/vendeur")({ component: VendeurPage });
 
 const TABS = [
   { id: "produits", label: "Produits", icon: <Package className="h-5 w-5" /> },
   { id: "commandes", label: "Cmd", icon: <ShoppingCart className="h-5 w-5" /> },
   { id: "wallet", label: "Wallet", icon: <Wallet className="h-5 w-5" /> },
+  { id: "pickup", label: "GPS", icon: <MapPin className="h-5 w-5" /> },
   { id: "messages", label: "Chat", icon: <MessageCircle className="h-5 w-5" /> },
   { id: "ia", label: "IA", icon: <Sparkles className="h-5 w-5" /> },
   { id: "support", label: "Aide", icon: <LifeBuoy className="h-5 w-5" /> },
