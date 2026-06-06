@@ -36,7 +36,8 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [color, setColor] = useState<string | null>(null);
   const [size, setSize] = useState<string | null>(null);
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<AddressRow | null>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [buying, setBuying] = useState(false);
 
   useEffect(() => {
