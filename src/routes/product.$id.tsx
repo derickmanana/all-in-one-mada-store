@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, dashboardPathForRole } from "@/lib/auth";
 import { formatMGA, formatUSDT } from "@/components/madastore/Money";
 import { addToCart } from "@/lib/cart";
+import { AddressSelector } from "@/components/madastore/AddressSelector";
+import { ShippingQuoteCard, type Quote } from "@/components/madastore/ShippingQuoteCard";
+import type { AddressRow } from "@/components/madastore/AddressForm";
 import { ArrowLeft, MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/product/$id")({
