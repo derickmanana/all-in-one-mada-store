@@ -104,10 +104,21 @@ function ProductPage() {
     if (!user) return;
     if (currentVariant?.colors?.length && !color) return toast.error("Choisissez une couleur");
     if (currentVariant?.sizes?.length && !size) return toast.error("Choisissez une taille/pointure");
-    if (!address.trim()) return toast.error("Adresse de livraison requise");
+    if (!address) return toast.error("Adresse de livraison requise");
+    if (!quote) return toast.error("Livraison en cours de calcul...");
     setBuying(true);
-    const fullAddr = [address, color && `Couleur: ${color}`, size && `Taille: ${size}`].filter(Boolean).join(" | ");
-    const { error } = await supabase.rpc("place_order", { _product_id: id, _quantity: qty, _address: fullAddr });
+    const note = [color && `Couleur: ${color}`, size && `Taille: ${size}`].filter(Boolean).join(" | ");
+    const addrText = `${address.full_name} · ${address.phone} · ${[address.street, address.quartier, address.city, address.province].filter(Boolean).join(", ")}${note ? " | " + note : ""}`;
+    const { error } = await supabase.rpc("place_order" as any, {
+      _product_id: id,
+      _quantity: qty,
+      _address: addrText,
+      _address_id: address.id,
+      _delivery_fee: quote.fee_mga,
+      _delivery_km: quote.km,
+      _delivery_days_min: quote.days_min,
+      _delivery_days_max: quote.days_max,
+    });
     setBuying(false);
     if (error) {
       const msg = error.message.includes("insufficient balance")
