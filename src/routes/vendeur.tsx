@@ -65,6 +65,7 @@ function VendeurPage() {
         {user && tab === "produits" && <VendorProductsManager vendorId={user.id} vendorActive={status === "actif"} />}
         {user && tab === "commandes" && <OrdersList userId={user.id} role="vendeur" />}
         {user && tab === "wallet" && <VendorWalletPanel userId={user.id} />}
+        {user && tab === "pickup" && <VendorPickupForm vendorId={user.id} />}
         {user && tab === "messages" && <MessagesPanel userId={user.id} />}
         {user && tab === "ia" && <SupportChat />}
         {user && tab === "support" && <TicketsPanel userId={user.id} />}
