@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, dashboardPathForRole } from "@/lib/auth";
 import { formatMGA, formatUSDT } from "@/components/madastore/Money";
 import { addToCart } from "@/lib/cart";
+import { AddressSelector } from "@/components/madastore/AddressSelector";
+import { ShippingQuoteCard, type Quote } from "@/components/madastore/ShippingQuoteCard";
+import type { AddressRow } from "@/components/madastore/AddressForm";
 import { ArrowLeft, MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/product/$id")({
@@ -33,7 +36,8 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [color, setColor] = useState<string | null>(null);
   const [size, setSize] = useState<string | null>(null);
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<AddressRow | null>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [buying, setBuying] = useState(false);
 
   useEffect(() => {
@@ -100,10 +104,21 @@ function ProductPage() {
     if (!user) return;
     if (currentVariant?.colors?.length && !color) return toast.error("Choisissez une couleur");
     if (currentVariant?.sizes?.length && !size) return toast.error("Choisissez une taille/pointure");
-    if (!address.trim()) return toast.error("Adresse de livraison requise");
+    if (!address) return toast.error("Adresse de livraison requise");
+    if (!quote) return toast.error("Livraison en cours de calcul...");
     setBuying(true);
-    const fullAddr = [address, color && `Couleur: ${color}`, size && `Taille: ${size}`].filter(Boolean).join(" | ");
-    const { error } = await supabase.rpc("place_order", { _product_id: id, _quantity: qty, _address: fullAddr });
+    const note = [color && `Couleur: ${color}`, size && `Taille: ${size}`].filter(Boolean).join(" | ");
+    const addrText = `${address.full_name} · ${address.phone} · ${[address.street, address.quartier, address.city, address.province].filter(Boolean).join(", ")}${note ? " | " + note : ""}`;
+    const { error } = await supabase.rpc("place_order" as any, {
+      _product_id: id,
+      _quantity: qty,
+      _address: addrText,
+      _address_id: address.id,
+      _delivery_fee: quote.fee_mga,
+      _delivery_km: quote.km,
+      _delivery_days_min: quote.days_min,
+      _delivery_days_max: quote.days_max,
+    });
     setBuying(false);
     if (error) {
       const msg = error.message.includes("insufficient balance")
@@ -313,13 +328,30 @@ function ProductPage() {
               </div>
             </div>
 
-            {popup === "buy" && (
-              <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adresse de livraison" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            {popup === "buy" && user && (
+              <div className="space-y-2">
+                <AddressSelector userId={user.id} value={address?.id ?? null} onChange={setAddress} />
+                <ShippingQuoteCard
+                  vendorId={p.vendor_id}
+                  clientLat={address?.latitude ?? null}
+                  clientLng={address?.longitude ?? null}
+                  onQuote={setQuote}
+                />
+              </div>
             )}
 
             <div className="flex items-center justify-between border-t border-border pt-3">
+              <span className="text-sm font-bold">Sous-total</span>
+              <span className="text-sm font-black">{formatMGA(effUnit * qty)}</span>
+            </div>
+            {popup === "buy" && quote && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Livraison</span><span>{formatMGA(quote.fee_mga)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
               <span className="text-sm font-bold">Total</span>
-              <span className="text-xl font-black text-mada-red">{formatMGA(effUnit * qty)}</span>
+              <span className="text-xl font-black text-mada-red">{formatMGA(effUnit * qty + (popup === "buy" ? (quote?.fee_mga ?? 0) : 0))}</span>
             </div>
 
             {popup === "cart" ? (

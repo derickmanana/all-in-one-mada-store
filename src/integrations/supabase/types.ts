@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          city: string | null
+          created_at: string
+          details: string | null
+          district: string | null
+          formatted_address: string | null
+          full_name: string
+          id: string
+          is_default: boolean
+          latitude: number
+          longitude: number
+          phone: string
+          province: string
+          quartier: string
+          region: string | null
+          street: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          details?: string | null
+          district?: string | null
+          formatted_address?: string | null
+          full_name: string
+          id?: string
+          is_default?: boolean
+          latitude: number
+          longitude: number
+          phone: string
+          province: string
+          quartier: string
+          region?: string | null
+          street: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          details?: string | null
+          district?: string | null
+          formatted_address?: string | null
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          latitude?: number
+          longitude?: number
+          phone?: string
+          province?: string
+          quartier?: string
+          region?: string | null
+          street?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           auto_release_days: number
@@ -219,11 +279,16 @@ export type Database = {
       }
       orders: {
         Row: {
+          address_id: string | null
           auto_release_at: string | null
           buyer_confirmed_at: string | null
           client_id: string
           commission_mga: number
           created_at: string
+          delivery_days_max: number | null
+          delivery_days_min: number | null
+          delivery_fee_mga: number
+          delivery_km: number | null
           id: string
           product_id: string
           product_image: string | null
@@ -240,11 +305,16 @@ export type Database = {
           vendor_released: boolean
         }
         Insert: {
+          address_id?: string | null
           auto_release_at?: string | null
           buyer_confirmed_at?: string | null
           client_id: string
           commission_mga?: number
           created_at?: string
+          delivery_days_max?: number | null
+          delivery_days_min?: number | null
+          delivery_fee_mga?: number
+          delivery_km?: number | null
           id?: string
           product_id: string
           product_image?: string | null
@@ -261,11 +331,16 @@ export type Database = {
           vendor_released?: boolean
         }
         Update: {
+          address_id?: string | null
           auto_release_at?: string | null
           buyer_confirmed_at?: string | null
           client_id?: string
           commission_mga?: number
           created_at?: string
+          delivery_days_max?: number | null
+          delivery_days_min?: number | null
+          delivery_fee_mga?: number
+          delivery_km?: number | null
           id?: string
           product_id?: string
           product_image?: string | null
@@ -282,6 +357,13 @@ export type Database = {
           vendor_released?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_product_id_fkey"
             columns: ["product_id"]
@@ -496,6 +578,15 @@ export type Database = {
           id: string
           logo_url: string | null
           phone: string
+          pickup_city: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          pickup_province: string | null
+          pickup_quartier: string | null
+          pickup_region: string | null
+          pickup_street: string | null
+          shipping_base_mga: number
+          shipping_per_km_mga: number
           shop_name: string
           status: Database["public"]["Enums"]["vendor_status"]
           updated_at: string
@@ -508,6 +599,15 @@ export type Database = {
           id: string
           logo_url?: string | null
           phone: string
+          pickup_city?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_province?: string | null
+          pickup_quartier?: string | null
+          pickup_region?: string | null
+          pickup_street?: string | null
+          shipping_base_mga?: number
+          shipping_per_km_mga?: number
           shop_name: string
           status?: Database["public"]["Enums"]["vendor_status"]
           updated_at?: string
@@ -520,6 +620,15 @@ export type Database = {
           id?: string
           logo_url?: string | null
           phone?: string
+          pickup_city?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_province?: string | null
+          pickup_quartier?: string | null
+          pickup_region?: string | null
+          pickup_street?: string | null
+          shipping_base_mga?: number
+          shipping_per_km_mga?: number
           shop_name?: string
           status?: Database["public"]["Enums"]["vendor_status"]
           updated_at?: string
@@ -658,6 +767,10 @@ export type Database = {
         Returns: undefined
       }
       auto_release_orders: { Args: never; Returns: number }
+      compute_shipping_quote: {
+        Args: { _lat: number; _lng: number; _vendor_id: string }
+        Returns: Json
+      }
       confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
@@ -666,10 +779,28 @@ export type Database = {
         }
         Returns: boolean
       }
-      place_order: {
-        Args: { _address: string; _product_id: string; _quantity: number }
-        Returns: string
+      haversine_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
       }
+      place_order:
+        | {
+            Args: { _address: string; _product_id: string; _quantity: number }
+            Returns: string
+          }
+        | {
+            Args: {
+              _address: string
+              _address_id?: string
+              _delivery_days_max?: number
+              _delivery_days_min?: number
+              _delivery_fee?: number
+              _delivery_km?: number
+              _product_id: string
+              _quantity: number
+            }
+            Returns: string
+          }
       request_withdrawal: {
         Args: {
           _account: string
