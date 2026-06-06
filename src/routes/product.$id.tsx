@@ -328,13 +328,30 @@ function ProductPage() {
               </div>
             </div>
 
-            {popup === "buy" && (
-              <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adresse de livraison" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            {popup === "buy" && user && (
+              <div className="space-y-2">
+                <AddressSelector userId={user.id} value={address?.id ?? null} onChange={setAddress} />
+                <ShippingQuoteCard
+                  vendorId={p.vendor_id}
+                  clientLat={address?.latitude ?? null}
+                  clientLng={address?.longitude ?? null}
+                  onQuote={setQuote}
+                />
+              </div>
             )}
 
             <div className="flex items-center justify-between border-t border-border pt-3">
+              <span className="text-sm font-bold">Sous-total</span>
+              <span className="text-sm font-black">{formatMGA(effUnit * qty)}</span>
+            </div>
+            {popup === "buy" && quote && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Livraison</span><span>{formatMGA(quote.fee_mga)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
               <span className="text-sm font-bold">Total</span>
-              <span className="text-xl font-black text-mada-red">{formatMGA(effUnit * qty)}</span>
+              <span className="text-xl font-black text-mada-red">{formatMGA(effUnit * qty + (popup === "buy" ? (quote?.fee_mga ?? 0) : 0))}</span>
             </div>
 
             {popup === "cart" ? (
