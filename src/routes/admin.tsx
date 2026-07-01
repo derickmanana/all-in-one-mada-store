@@ -170,3 +170,66 @@ function DepositsManager() {
     </div>
   );
 }
+
+function LogisticsPanel() {
+  const [stats, setStats] = useState({ in_transit: 0, shipped: 0, delivered: 0, late: 0 });
+  const [rows, setRows] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("id, product_title, tracking_status, status, depart_at, eta_at, courier_name, shipping_mode, depart_city, total_mga, created_at" as any)
+        .in("status", ["expedie", "livre"] as any)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const list = (data ?? []) as any[];
+      setRows(list);
+      const now = Date.now();
+      setStats({
+        in_transit: list.filter((r) => r.tracking_status === "in_transit").length,
+        shipped: list.filter((r) => r.tracking_status === "shipped").length,
+        delivered: list.filter((r) => r.tracking_status === "delivered" || r.status === "livre").length,
+        late: list.filter((r) => r.eta_at && new Date(r.eta_at).getTime() < now && r.status !== "livre" && r.tracking_status !== "delivered").length,
+      });
+    })();
+  }, []);
+  const cards = [
+    { label: "Expédiées", value: stats.shipped, color: "from-purple-500 to-indigo-500" },
+    { label: "En transit", value: stats.in_transit, color: "from-blue-500 to-cyan-500" },
+    { label: "Livrées", value: stats.delivered, color: "from-mada-green to-emerald-500" },
+    { label: "En retard", value: stats.late, color: "from-mada-red to-orange-500" },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {cards.map((c) => (
+          <div key={c.label} className={`rounded-2xl bg-gradient-to-br ${c.color} p-4 text-white`}>
+            <div className="text-xs font-bold uppercase opacity-90">{c.label}</div>
+            <div className="mt-1 text-3xl font-black">{c.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="text-sm font-black mb-3">Commandes en circulation</div>
+        <div className="space-y-2">
+          {rows.length === 0 && <div className="text-xs text-muted-foreground">Aucune commande en cours.</div>}
+          {rows.slice(0, 50).map((r) => {
+            const late = r.eta_at && new Date(r.eta_at).getTime() < Date.now() && r.status !== "livre";
+            return (
+              <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background p-2 text-xs">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-bold">{r.product_title}</div>
+                  <div className="text-muted-foreground">{r.shipping_mode ?? "—"} · {r.courier_name ?? "—"} · {r.depart_city ?? "—"}</div>
+                </div>
+                <div className="text-right">
+                  <div>{r.tracking_status ?? "prepare"}</div>
+                  {late && <div className="text-mada-red font-bold">⚠ Retard</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
