@@ -109,14 +109,14 @@ function TrackingPage() {
     return () => { cancelled = true; };
   }, [order, progress]);
 
-  if (err) return <ProtectedShell title="Suivi"><div className="p-4 text-destructive">{err}</div></ProtectedShell>;
-  if (!order) return <ProtectedShell title="Suivi"><div className="p-4">Chargement…</div></ProtectedShell>;
+  if (err) return <ProtectedShell expectedRole={undefined as any} title="Suivi"><div className="p-4 text-destructive">{err}</div></ProtectedShell>;
+  if (!order) return <ProtectedShell expectedRole={undefined as any} title="Suivi"><div className="p-4">Chargement…</div></ProtectedShell>;
 
   const currentStep = order.tracking_status || "prepare";
   const stepIdx = STEPS.findIndex((s) => s.id === currentStep);
 
   return (
-    <ProtectedShell title="Suivi de livraison">
+    <ProtectedShell expectedRole={undefined as any} title="Suivi de livraison">
       <div className="mb-3">
         <Link to="/client" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Retour
