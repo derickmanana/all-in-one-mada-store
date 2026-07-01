@@ -7,7 +7,7 @@ import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMGA } from "@/components/madastore/Money";
-import { Store, Wallet, LifeBuoy, BarChart3, ArrowDownToLine } from "lucide-react";
+import { Store, Wallet, LifeBuoy, BarChart3, ArrowDownToLine, Truck } from "lucide-react";
 import { AdminWalletPanel } from "@/components/madastore/AdminWalletPanel";
 
 export const Route = createFileRoute("/admin")({
@@ -19,6 +19,7 @@ const TABS = [
   { id: "vendors", label: "Vendeurs", icon: <Store className="h-5 w-5" /> },
   { id: "deposits", label: "Dépôts", icon: <Wallet className="h-5 w-5" /> },
   { id: "wallet", label: "Wallet", icon: <ArrowDownToLine className="h-5 w-5" /> },
+  { id: "logistics", label: "Livraison", icon: <Truck className="h-5 w-5" /> },
   { id: "tickets", label: "Tickets", icon: <LifeBuoy className="h-5 w-5" /> },
 ];
 
