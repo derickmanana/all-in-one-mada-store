@@ -38,6 +38,7 @@ function AdminPage() {
         {tab === "vendors" && <VendorsManager />}
         {tab === "deposits" && <DepositsManager />}
         {user && tab === "wallet" && <AdminWalletPanel userId={user.id} />}
+        {tab === "logistics" && <LogisticsPanel />}
         {user && tab === "tickets" && <TicketsPanel userId={user.id} isAdmin />}
       </div>
     </ProtectedShell>
