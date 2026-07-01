@@ -284,20 +284,30 @@ export type Database = {
           buyer_confirmed_at: string | null
           client_id: string
           commission_mga: number
+          coop_name: string | null
+          courier_name: string | null
           created_at: string
+          delivered_at: string | null
           delivery_days_max: number | null
           delivery_days_min: number | null
           delivery_fee_mga: number
           delivery_km: number | null
+          depart_at: string | null
+          depart_city: string | null
+          eta_at: string | null
           id: string
+          in_transit_at: string | null
           product_id: string
           product_image: string | null
           product_title: string
           quantity: number
           released_at: string | null
+          shipped_at: string | null
           shipping_address: string | null
+          shipping_mode: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_mga: number
+          tracking_status: string
           unit_price_mga: number
           updated_at: string
           vendor_amount_mga: number
@@ -310,20 +320,30 @@ export type Database = {
           buyer_confirmed_at?: string | null
           client_id: string
           commission_mga?: number
+          coop_name?: string | null
+          courier_name?: string | null
           created_at?: string
+          delivered_at?: string | null
           delivery_days_max?: number | null
           delivery_days_min?: number | null
           delivery_fee_mga?: number
           delivery_km?: number | null
+          depart_at?: string | null
+          depart_city?: string | null
+          eta_at?: string | null
           id?: string
+          in_transit_at?: string | null
           product_id: string
           product_image?: string | null
           product_title: string
           quantity: number
           released_at?: string | null
+          shipped_at?: string | null
           shipping_address?: string | null
+          shipping_mode?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga: number
+          tracking_status?: string
           unit_price_mga: number
           updated_at?: string
           vendor_amount_mga?: number
@@ -336,20 +356,30 @@ export type Database = {
           buyer_confirmed_at?: string | null
           client_id?: string
           commission_mga?: number
+          coop_name?: string | null
+          courier_name?: string | null
           created_at?: string
+          delivered_at?: string | null
           delivery_days_max?: number | null
           delivery_days_min?: number | null
           delivery_fee_mga?: number
           delivery_km?: number | null
+          depart_at?: string | null
+          depart_city?: string | null
+          eta_at?: string | null
           id?: string
+          in_transit_at?: string | null
           product_id?: string
           product_image?: string | null
           product_title?: string
           quantity?: number
           released_at?: string | null
+          shipped_at?: string | null
           shipping_address?: string | null
+          shipping_mode?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga?: number
+          tracking_status?: string
           unit_price_mga?: number
           updated_at?: string
           vendor_amount_mga?: number
@@ -809,6 +839,23 @@ export type Database = {
           _method: string
         }
         Returns: string
+      }
+      vendor_mark_in_transit: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
+      vendor_ship_order: {
+        Args: {
+          _coop: string
+          _courier: string
+          _days_max: number
+          _days_min: number
+          _depart_at: string
+          _depart_city: string
+          _mode: string
+          _order_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
