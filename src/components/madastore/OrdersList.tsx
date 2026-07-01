@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA } from "./Money";
+import { ShippingModal } from "./ShippingModal";
 
 type Order = {
   id: string;
@@ -14,6 +16,8 @@ type Order = {
   vendor_released?: boolean;
   buyer_confirmed_at?: string | null;
   auto_release_at?: string | null;
+  tracking_status?: string | null;
+  shipping_address?: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -24,7 +28,6 @@ const STATUS_LABELS: Record<string, string> = {
   annule: "Annulée",
   rembourse: "Remboursée",
 };
-
 const STATUS_COLORS: Record<string, string> = {
   en_attente: "bg-yellow-100 text-yellow-800",
   paye: "bg-blue-100 text-blue-800",
@@ -33,31 +36,36 @@ const STATUS_COLORS: Record<string, string> = {
   annule: "bg-destructive/15 text-destructive",
   rembourse: "bg-muted text-muted-foreground",
 };
+const TRACK_LABEL: Record<string, string> = {
+  prepare: "📦 Préparé",
+  shipped: "🚚 Expédié",
+  in_transit: "🛣️ En transit",
+  arrived: "📍 Arrivé",
+  delivered: "✅ Livré",
+};
 
 export function OrdersList({ userId, role }: { userId: string; role: "client" | "vendeur" }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shipOrder, setShipOrder] = useState<Order | null>(null);
 
   async function load() {
     setLoading(true);
     const col = role === "client" ? "client_id" : "vendor_id";
     const { data } = await supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at" as any)
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address" as any)
       .eq(col, userId)
       .order("created_at", { ascending: false });
     setOrders((data ?? []) as any);
     setLoading(false);
   }
+  useEffect(() => { load(); }, [userId, role]);
 
-  useEffect(() => {
-    load();
-  }, [userId, role]);
-
-  async function updateStatus(id: string, status: string) {
-    const { error } = await supabase.from("orders").update({ status: status as any }).eq("id", id);
+  async function markInTransit(id: string) {
+    const { error } = await supabase.rpc("vendor_mark_in_transit" as any, { _order_id: id });
     if (error) return toast.error(error.message);
-    toast.success("Statut mis à jour");
+    toast.success("En cours de livraison 🛣️");
     load();
   }
 
@@ -79,20 +87,39 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
           <div className="flex-1 min-w-0">
             <div className="line-clamp-2 text-sm font-bold">{o.product_title}</div>
             <div className="text-xs text-muted-foreground">Qté: {o.quantity} · {new Date(o.created_at).toLocaleDateString("fr-FR")}</div>
-            <div className="mt-1 flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-black text-mada-red">{formatMGA(o.total_mga)}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_COLORS[o.status]}`}>{STATUS_LABELS[o.status]}</span>
+              <div className="flex items-center gap-1 flex-wrap justify-end">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_COLORS[o.status]}`}>{STATUS_LABELS[o.status]}</span>
+                {o.tracking_status && o.tracking_status !== "prepare" && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{TRACK_LABEL[o.tracking_status] ?? o.tracking_status}</span>
+                )}
+              </div>
             </div>
+
+            {/* Vendor actions */}
             {role === "vendeur" && o.status === "paye" && (
-              <button onClick={() => updateStatus(o.id, "expedie")} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                Marquer expédiée
+              <button onClick={() => setShipOrder(o)} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
+                🚚 Expédiée
               </button>
             )}
-            {role === "vendeur" && o.status === "expedie" && (
-              <button onClick={() => updateStatus(o.id, "livre")} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                Marquer livrée
+            {role === "vendeur" && o.status === "expedie" && o.tracking_status !== "in_transit" && (
+              <button onClick={() => markInTransit(o.id)} className="mt-2 rounded-lg bg-mada-red px-3 py-1 text-xs font-bold text-primary-foreground">
+                Aller Livrée →
               </button>
             )}
+            {role === "vendeur" && o.tracking_status === "in_transit" && (
+              <div className="mt-1 text-[10px] font-bold text-mada-red">En cours de livraison…</div>
+            )}
+
+            {/* Tracking link for both */}
+            {(o.status === "expedie" || o.status === "livre" || o.tracking_status === "in_transit") && (
+              <Link to="/order/$id/tracking" params={{ id: o.id }} className="mt-2 ml-2 inline-block text-xs font-bold text-mada-green underline">
+                🚚 Suivi de livraison
+              </Link>
+            )}
+
+            {/* Client confirm reception */}
             {role === "client" && !o.vendor_released && (o.status === "expedie" || o.status === "livre" || o.status === "paye") && (
               <button
                 onClick={async () => {
@@ -101,20 +128,20 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
                   toast.success("Merci ! Le vendeur sera payé ✅");
                   load();
                 }}
-                className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground"
+                className="mt-2 ml-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground"
               >
                 ✅ Produit reçu
               </button>
             )}
-            {o.vendor_released && (
-              <div className="mt-1 text-[10px] font-bold text-mada-green">Fonds vendeur débloqués</div>
-            )}
+            {o.vendor_released && <div className="mt-1 text-[10px] font-bold text-mada-green">Fonds vendeur débloqués</div>}
             {role === "vendeur" && !o.vendor_released && o.auto_release_at && (
               <div className="mt-1 text-[10px] text-muted-foreground">Auto-libération: {new Date(o.auto_release_at).toLocaleDateString("fr-FR")}</div>
             )}
           </div>
         </div>
       ))}
+
+      {shipOrder && <ShippingModal order={shipOrder} onClose={() => setShipOrder(null)} onDone={load} />}
     </div>
   );
 }
