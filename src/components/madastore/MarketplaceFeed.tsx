@@ -116,6 +116,34 @@ export function MarketplaceFeed() {
         ))}
       </div>
 
+      {!q.trim() && (
+        <div className="rounded-2xl border-2 border-mada-red/10 bg-gradient-to-br from-white to-mada-red/5 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-black text-foreground">🇲🇬 Catégories</h3>
+            {cat && (
+              <button
+                onClick={() => setCat(null)}
+                className="text-[11px] font-bold text-mada-red hover:underline"
+              >
+                Voir tout
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11">
+            <CatTile active={cat === null} onClick={() => setCat(null)} label="Tout" icon="🌍" />
+            {cats.map((c) => (
+              <CatTile
+                key={c.id}
+                active={cat === c.id}
+                onClick={() => setCat(c.id)}
+                label={c.name}
+                icon={c.icon ?? "📦"}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -175,6 +203,22 @@ function CatChip({ active, onClick, label, icon }: { active: boolean; onClick: (
       }`}
     >
       <span>{icon}</span> {label}
+    </button>
+  );
+}
+
+function CatTile({ active, onClick, label, icon }: { active: boolean; onClick: () => void; label: string; icon: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 rounded-xl border-2 p-2 transition-all active:scale-95 ${
+        active
+          ? "border-mada-red bg-mada-red text-primary-foreground shadow-glow-red"
+          : "border-border bg-white hover:border-mada-red/50"
+      }`}
+    >
+      <span className="text-2xl">{icon}</span>
+      <span className="line-clamp-1 text-[10px] font-bold leading-tight">{label}</span>
     </button>
   );
 }
