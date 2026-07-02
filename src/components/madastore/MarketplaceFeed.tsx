@@ -206,3 +206,19 @@ function CatChip({ active, onClick, label, icon }: { active: boolean; onClick: (
     </button>
   );
 }
+
+function CatTile({ active, onClick, label, icon }: { active: boolean; onClick: () => void; label: string; icon: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 rounded-xl border-2 p-2 transition-all active:scale-95 ${
+        active
+          ? "border-mada-red bg-mada-red text-primary-foreground shadow-glow-red"
+          : "border-border bg-white hover:border-mada-red/50"
+      }`}
+    >
+      <span className="text-2xl">{icon}</span>
+      <span className="line-clamp-1 text-[10px] font-bold leading-tight">{label}</span>
+    </button>
+  );
+}
