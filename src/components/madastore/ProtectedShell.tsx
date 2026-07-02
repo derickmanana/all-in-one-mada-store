@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, dashboardPathForRole, type AppRole } from "@/lib/auth";
 import { LogOut } from "lucide-react";
+import { NotificationsBell } from "./NotificationsBell";
 
 interface Props {
   expectedRole: AppRole;
@@ -53,12 +54,15 @@ export function ProtectedShell({ expectedRole, title, children }: Props) {
               <div className="text-sm font-black">{title}</div>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold hover:border-mada-red hover:text-mada-red transition-colors"
-          >
-            <LogOut className="h-4 w-4" /> Déconnexion
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationsBell />
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold hover:border-mada-red hover:text-mada-red transition-colors"
+            >
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Déconnexion</span>
+            </button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
