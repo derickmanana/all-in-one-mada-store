@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, dashboardPathForRole, type AppRole } from "@/lib/auth";
 import { LogOut } from "lucide-react";
+import { NotificationsBell } from "./NotificationsBell";
 
 interface Props {
   expectedRole: AppRole;
