@@ -92,11 +92,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/otxuy4bIyccB4k1uKPniLvtkpsh1/social-images/social-1780468770649-ChatGPT_Image_Jun_3,_2026,_09_33_57_AM.webp" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
     ],
+    meta: [
+      { name: "theme-color", content: "#FC3D32" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Mada Store" },
+    ].concat([]),
   }),
   shellComponent: RootShell,
   component: RootComponent,
