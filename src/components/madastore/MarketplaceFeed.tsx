@@ -116,33 +116,6 @@ export function MarketplaceFeed() {
         ))}
       </div>
 
-      {!q.trim() && (
-        <div className="rounded-2xl border-2 border-mada-red/10 bg-gradient-to-br from-white to-mada-red/5 p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-black text-foreground">🇲🇬 Catégories</h3>
-            {cat && (
-              <button
-                onClick={() => setCat(null)}
-                className="text-[11px] font-bold text-mada-red hover:underline"
-              >
-                Voir tout
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11">
-            <CatTile active={cat === null} onClick={() => setCat(null)} label="Tout" icon="🌍" />
-            {cats.map((c) => (
-              <CatTile
-                key={c.id}
-                active={cat === c.id}
-                onClick={() => setCat(c.id)}
-                label={c.name}
-                icon={c.icon ?? "📦"}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-5">
