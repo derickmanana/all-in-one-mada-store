@@ -62,6 +62,21 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   }
   useEffect(() => { load(); }, [userId, role]);
 
+  // Realtime sync: refresh list on any change to orders touching this user
+  useEffect(() => {
+    const col = role === "client" ? "client_id" : "vendor_id";
+    const ch = supabase
+      .channel(`orders-${role}-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `${col}=eq.${userId}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, role]);
+
   async function markInTransit(id: string) {
     const { error } = await supabase.rpc("vendor_mark_in_transit" as any, { _order_id: id });
     if (error) return toast.error(error.message);
