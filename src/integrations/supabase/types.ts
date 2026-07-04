@@ -473,6 +473,7 @@ export type Database = {
           price_usdt: number | null
           stock: number
           title: string
+          unit: string
           updated_at: string
           variants: Json
           vendor_id: string
@@ -489,6 +490,7 @@ export type Database = {
           price_usdt?: number | null
           stock?: number
           title: string
+          unit?: string
           updated_at?: string
           variants?: Json
           vendor_id: string
@@ -505,6 +507,7 @@ export type Database = {
           price_usdt?: number | null
           stock?: number
           title?: string
+          unit?: string
           updated_at?: string
           variants?: Json
           vendor_id?: string
@@ -624,6 +627,7 @@ export type Database = {
           pickup_street: string | null
           shipping_base_mga: number
           shipping_per_km_mga: number
+          shipping_zones: Json
           shop_name: string
           status: Database["public"]["Enums"]["vendor_status"]
           updated_at: string
@@ -645,6 +649,7 @@ export type Database = {
           pickup_street?: string | null
           shipping_base_mga?: number
           shipping_per_km_mga?: number
+          shipping_zones?: Json
           shop_name: string
           status?: Database["public"]["Enums"]["vendor_status"]
           updated_at?: string
@@ -666,6 +671,7 @@ export type Database = {
           pickup_street?: string | null
           shipping_base_mga?: number
           shipping_per_km_mga?: number
+          shipping_zones?: Json
           shop_name?: string
           status?: Database["public"]["Enums"]["vendor_status"]
           updated_at?: string

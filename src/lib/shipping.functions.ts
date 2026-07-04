@@ -5,12 +5,14 @@ type QuoteInput = {
   vendor_lng: number;
   client_lat: number;
   client_lng: number;
+  /** Flat fee set manually by the vendor (MGA). GPS is used only for the km/route estimate. */
   base_mga: number;
-  per_km_mga: number;
+  /** @deprecated kept for backward compat, no longer used to compute the price. */
+  per_km_mga?: number;
 };
 
-// Compute shipping quote using Google Routes API (real driving distance via Lovable gateway).
-// Falls back to haversine if the gateway / API call fails.
+// Return the vendor's manual flat fee. GPS is used ONLY for distance/duration display and ETA,
+// never to compute the price anymore (see product spec: "Supprimer le calcul automatique basé sur les km").
 export const getShippingQuote = createServerFn({ method: "POST" })
   .inputValidator((d: QuoteInput) => {
     if (
@@ -39,7 +41,8 @@ export const getShippingQuote = createServerFn({ method: "POST" })
     };
 
     const buildResult = (km: number, durationMin: number | null, source: string) => {
-      const fee = Math.round(data.base_mga + km * data.per_km_mga);
+      // Flat fee — no km multiplier.
+      const fee = Math.max(0, Math.round(data.base_mga));
       const daysMin = km < 30 ? 1 : km < 150 ? 2 : km < 500 ? 4 : 6;
       const daysMax = daysMin + 2;
       return {
