@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA, formatUSDT } from "./Money";
-import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon } from "lucide-react";
+import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save } from "lucide-react";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGES = 10;
@@ -12,6 +12,35 @@ const MAX_VIDEO_MB = 50;
 const COLOR_PRESETS = ["Noir", "Blanc", "Rouge", "Bleu", "Vert", "Jaune", "Rose", "Gris", "Marron", "Beige"];
 const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL"];
 const SHOE_PRESETS = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"];
+const UNIT_PRESETS = [
+  "unité", "pièce", "paire", "boîte", "plaquette", "sachet", "lot",
+  "g", "kg", "mL", "L",
+  "cm", "m", "m²", "m³", "pouce",
+];
+
+// Validation rules
+const TITLE_MIN_CHARS = 12;
+const TITLE_MAX_WORDS = 40;
+const DESC_MIN_WORDS = 60;
+const DESC_MAX_WORDS = 480;
+
+function countWords(s: string): number {
+  const t = (s || "").trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+function validateTitle(t: string): string | null {
+  if (t.trim().length < TITLE_MIN_CHARS) return `Titre trop court (min ${TITLE_MIN_CHARS} caractères)`;
+  if (countWords(t) > TITLE_MAX_WORDS) return `Titre trop long (max ${TITLE_MAX_WORDS} mots)`;
+  return null;
+}
+function validateDesc(d: string): string | null {
+  const w = countWords(d);
+  if (w < DESC_MIN_WORDS) return `Description trop courte (${w}/${DESC_MIN_WORDS} mots)`;
+  if (w > DESC_MAX_WORDS) return `Description trop longue (${w}/${DESC_MAX_WORDS} mots)`;
+  return null;
+}
 
 type Variant = { price_mga: number; colors: string[]; sizes: string[] };
 type ImageEntry = { file: File; preview: string; variant: Variant };
@@ -19,6 +48,7 @@ type ImageEntry = { file: File; preview: string; variant: Variant };
 type Product = {
   id: string;
   title: string;
+  description: string | null;
   price_mga: number;
   stock: number;
   images: string[];
@@ -26,6 +56,7 @@ type Product = {
   category_id: string | null;
   video_url: string | null;
   variants: any;
+  unit: string | null;
 };
 type Category = { id: string; name: string };
 
@@ -36,18 +67,24 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [stock, setStock] = useState("1");
+  const [unit, setUnit] = useState<string>("unité");
   const [category, setCategory] = useState<string>("");
   const [entries, setEntries] = useState<ImageEntry[]>([]);
   const [video, setVideo] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [engagement, setEngagement] = useState<Record<string, { likes: number; comments: number }>>({});
+  const [editing, setEditing] = useState<Product | null>(null);
+
+  const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
+  const descErr = useMemo(() => (desc ? validateDesc(desc) : null), [desc]);
+  const descWords = useMemo(() => countWords(desc), [desc]);
 
   async function load() {
     const [p, c] = await Promise.all([
       supabase.from("products").select("*").eq("vendor_id", vendorId).order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name"),
     ]);
-    const prods = (p.data ?? []) as Product[];
+    const prods = ((p.data ?? []) as any[]) as Product[];
     setProducts(prods);
     setCats((c.data ?? []) as Category[]);
     if (c.data?.[0] && !category) setCategory(c.data[0].id);
@@ -67,6 +104,13 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   }
   useEffect(() => {
     load();
+    // Realtime: refresh when own products change (any tab / device)
+    const ch = supabase
+      .channel(`vendor-products-${vendorId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "products", filter: `vendor_id=eq.${vendorId}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   function addFiles(files: FileList | null) {
@@ -74,18 +118,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
     const arr = Array.from(files);
     const ok: ImageEntry[] = [];
     for (const f of arr) {
-      if (entries.length + ok.length >= MAX_IMAGES) {
-        toast.error(`Max ${MAX_IMAGES} images`);
-        break;
-      }
-      if (!ALLOWED_TYPES.includes(f.type)) {
-        toast.error(`${f.name}: format non supporté (JPG/PNG/WEBP)`);
-        continue;
-      }
-      if (f.size > MAX_IMG_MB * 1024 * 1024) {
-        toast.error(`${f.name}: > ${MAX_IMG_MB} Mo`);
-        continue;
-      }
+      if (entries.length + ok.length >= MAX_IMAGES) { toast.error(`Max ${MAX_IMAGES} images`); break; }
+      if (!ALLOWED_TYPES.includes(f.type)) { toast.error(`${f.name}: format non supporté`); continue; }
+      if (f.size > MAX_IMG_MB * 1024 * 1024) { toast.error(`${f.name}: > ${MAX_IMG_MB} Mo`); continue; }
       ok.push({ file: f, preview: URL.createObjectURL(f), variant: { price_mga: 0, colors: [], sizes: [] } });
     }
     setEntries((e) => [...e, ...ok]);
@@ -95,20 +130,19 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
     setEntries((e) => e.map((x, idx) => (idx === i ? { ...x, variant: { ...x.variant, ...patch } } : x)));
   }
   function toggleInList(i: number, key: "colors" | "sizes", value: string) {
-    setEntries((e) =>
-      e.map((x, idx) => {
-        if (idx !== i) return x;
-        const cur = x.variant[key];
-        return { ...x, variant: { ...x.variant, [key]: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value] } };
-      })
-    );
+    setEntries((e) => e.map((x, idx) => {
+      if (idx !== i) return x;
+      const cur = x.variant[key];
+      return { ...x, variant: { ...x.variant, [key]: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value] } };
+    }));
   }
-  function removeEntry(i: number) {
-    setEntries((e) => e.filter((_, idx) => idx !== i));
-  }
+  function removeEntry(i: number) { setEntries((e) => e.filter((_, idx) => idx !== i)); }
 
   async function create() {
-    if (!title.trim()) return toast.error("Titre requis");
+    const tErr = validateTitle(title);
+    const dErr = validateDesc(desc);
+    if (tErr) return toast.error(tErr);
+    if (dErr) return toast.error(dErr);
     if (entries.length === 0) return toast.error("Au moins une image");
     if (entries.some((e) => !e.variant.price_mga || e.variant.price_mga <= 0))
       return toast.error("Prix obligatoire pour chaque image/variante");
@@ -142,18 +176,18 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       const { error } = await supabase.from("products").insert({
         vendor_id: vendorId,
         category_id: category || null,
-        title,
-        description: desc || null,
+        title, description: desc,
         price_mga: minPrice,
         stock: Number(stock) || 0,
         images: urls,
         video_url,
         variants,
-      });
+        unit: unit || "unité",
+      } as any);
       if (error) throw error;
-      toast.success("Produit publié");
+      toast.success("Produit publié ✅");
       setShowForm(false);
-      setTitle(""); setDesc(""); setStock("1"); setEntries([]); setVideo(null);
+      setTitle(""); setDesc(""); setStock("1"); setUnit("unité"); setEntries([]); setVideo(null);
       load();
     } catch (e: any) {
       toast.error(e.message ?? "Erreur");
@@ -193,10 +227,24 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
 
       {showForm && (
         <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du produit" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-          <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description" rows={3} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-          <div className="grid grid-cols-2 gap-3">
-            <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Stock global" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+          <div>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Titre du produit (min ${TITLE_MIN_CHARS} caractères)`} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            {title && (
+              <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : "text-mada-green"}`}>
+                {titleErr ?? `✓ ${title.trim().length} caractères · ${countWords(title)} mots`}
+              </div>
+            )}
+          </div>
+          <div>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={`Description (${DESC_MIN_WORDS} à ${DESC_MAX_WORDS} mots)`} rows={5} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : desc ? "text-mada-green" : "text-muted-foreground"}`}>
+              {descErr ?? (desc ? `✓ ${descWords} mots` : `${DESC_MIN_WORDS}–${DESC_MAX_WORDS} mots requis`)}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Stock" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <input list="units-list" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Unité" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <datalist id="units-list">{UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
               {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -204,10 +252,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
 
           <div>
             <label className="block">
-              <span className="text-xs font-bold">Images du produit (max {MAX_IMAGES}, {MAX_IMG_MB} Mo, JPG/PNG/WEBP)</span>
+              <span className="text-xs font-bold">Images (max {MAX_IMAGES}, {MAX_IMG_MB} Mo, JPG/PNG/WEBP)</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => addFiles(e.target.files)} className="mt-1 block w-full text-xs" />
             </label>
-            <p className="mt-1 text-[10px] text-muted-foreground">Pour chaque image : un prix obligatoire, couleurs/tailles optionnelles.</p>
           </div>
 
           {entries.length > 0 && (
@@ -223,44 +270,22 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                       </div>
                       <div>
                         <label className="text-[10px] font-bold uppercase">Prix (MGA) *</label>
-                        <input
-                          type="number"
-                          value={e.variant.price_mga || ""}
-                          onChange={(ev) => updateVariant(i, { price_mga: Number(ev.target.value) })}
-                          placeholder="ex. 45000"
-                          className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                        />
-                        {e.variant.price_mga > 0 && (
-                          <div className="mt-1 text-[10px] text-muted-foreground">≈ {formatUSDT(e.variant.price_mga)}</div>
-                        )}
+                        <input type="number" value={e.variant.price_mga || ""} onChange={(ev) => updateVariant(i, { price_mga: Number(ev.target.value) })} placeholder="ex. 45000" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                        {e.variant.price_mga > 0 && <div className="mt-1 text-[10px] text-muted-foreground">≈ {formatUSDT(e.variant.price_mga)}</div>}
                       </div>
                       <div>
-                        <div className="text-[10px] font-bold uppercase mb-1">Couleurs (optionnel)</div>
+                        <div className="text-[10px] font-bold uppercase mb-1">Couleurs</div>
                         <div className="flex flex-wrap gap-1">
                           {COLOR_PRESETS.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => toggleInList(i, "colors", c)}
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.colors.includes(c) ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"}`}
-                            >
-                              {c}
-                            </button>
+                            <button key={c} type="button" onClick={() => toggleInList(i, "colors", c)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.colors.includes(c) ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"}`}>{c}</button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] font-bold uppercase mb-1">Tailles / pointures (optionnel)</div>
+                        <div className="text-[10px] font-bold uppercase mb-1">Tailles / pointures</div>
                         <div className="flex flex-wrap gap-1">
                           {[...SIZE_PRESETS, ...SHOE_PRESETS].map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => toggleInList(i, "sizes", s)}
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.sizes.includes(s) ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"}`}
-                            >
-                              {s}
-                            </button>
+                            <button key={s} type="button" onClick={() => toggleInList(i, "sizes", s)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.sizes.includes(s) ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"}`}>{s}</button>
                           ))}
                         </div>
                       </div>
@@ -272,12 +297,16 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
           )}
 
           <label className="block rounded-lg border border-dashed border-border p-3">
-            <span className="flex items-center gap-2 text-xs font-bold"><VideoIcon className="h-4 w-4" /> Vidéo du produit (optionnel, max {MAX_VIDEO_MB} Mo)</span>
+            <span className="flex items-center gap-2 text-xs font-bold"><VideoIcon className="h-4 w-4" /> Vidéo (optionnel, max {MAX_VIDEO_MB} Mo)</span>
             <input type="file" accept="video/*" onChange={(e) => setVideo(e.target.files?.[0] ?? null)} className="mt-1 block w-full text-xs" />
             {video && <div className="mt-1 text-[10px] text-muted-foreground">{video.name} · {(video.size / 1024 / 1024).toFixed(1)} Mo</div>}
           </label>
 
-          <button onClick={create} disabled={saving} className="w-full rounded-xl bg-mada-green py-2.5 text-sm font-black text-secondary-foreground disabled:opacity-50">
+          <button
+            onClick={create}
+            disabled={saving || !!titleErr || !!descErr || !title || !desc}
+            className="w-full rounded-xl bg-mada-green py-2.5 text-sm font-black text-secondary-foreground disabled:opacity-50"
+          >
             {saving ? "Publication..." : "Publier le produit"}
           </button>
         </div>
@@ -299,13 +328,14 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                   <div className="line-clamp-1 text-xs font-bold">{p.title}</div>
                   <div className="text-sm font-black text-mada-red">{formatMGA(p.price_mga)}</div>
                   <div className="text-[10px] text-muted-foreground">≈ {formatUSDT(p.price_mga)}</div>
-                  <div className="text-[10px] text-muted-foreground">Stock: {p.stock}</div>
+                  <div className="text-[10px] text-muted-foreground">Stock: {p.stock} {p.unit || "unité"}</div>
                   <div className="flex items-center gap-2 pt-1 text-[10px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" /> {eng.likes}</span>
                     <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> {eng.comments}</span>
                   </div>
                   <div className="flex gap-1 pt-1">
-                    <button onClick={() => toggle(p)} className="flex-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold">{p.is_active ? "Cacher" : "Activer"}</button>
+                    <button onClick={() => setEditing(p)} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold"><Pencil className="h-3 w-3" /> Éditer</button>
+                    <button onClick={() => toggle(p)} className="rounded-lg border border-border px-2 py-1 text-[10px] font-bold">{p.is_active ? "Cacher" : "Activer"}</button>
                     <button onClick={() => remove(p.id)} className="rounded-lg border border-destructive p-1 text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
                 </div>
@@ -314,6 +344,154 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
           })}
         </div>
       )}
+
+      {editing && (
+        <EditProductModal
+          product={editing}
+          categories={cats}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Edit modal — full product update (title, desc, price, stock, unit, category, images, variants)
+// ────────────────────────────────────────────────────────────
+function EditProductModal({
+  product, categories, onClose, onSaved,
+}: { product: Product; categories: Category[]; onClose: () => void; onSaved: () => void }) {
+  const [title, setTitle] = useState(product.title);
+  const [desc, setDesc] = useState(product.description || "");
+  const [stock, setStock] = useState(String(product.stock));
+  const [unit, setUnit] = useState(product.unit || "unité");
+  const [category, setCategory] = useState(product.category_id || "");
+  const [price, setPrice] = useState(String(product.price_mga));
+  const [images, setImages] = useState<string[]>(product.images || []);
+  const [newFiles, setNewFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  const titleErr = validateTitle(title);
+  const descErr = desc ? validateDesc(desc) : `Description requise (${DESC_MIN_WORDS}–${DESC_MAX_WORDS} mots)`;
+
+  function addNewFiles(files: FileList | null) {
+    if (!files) return;
+    const ok: { file: File; preview: string }[] = [];
+    for (const f of Array.from(files)) {
+      if (images.length + newFiles.length + ok.length >= MAX_IMAGES) { toast.error(`Max ${MAX_IMAGES}`); break; }
+      if (!ALLOWED_TYPES.includes(f.type)) { toast.error(`${f.name}: format non supporté`); continue; }
+      if (f.size > MAX_IMG_MB * 1024 * 1024) { toast.error(`${f.name}: trop lourd`); continue; }
+      ok.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    setNewFiles((n) => [...n, ...ok]);
+  }
+
+  async function save() {
+    if (titleErr) return toast.error(titleErr);
+    if (descErr) return toast.error(descErr);
+    if (images.length + newFiles.length === 0) return toast.error("Au moins une image");
+    if (Number(price) <= 0) return toast.error("Prix invalide");
+
+    setSaving(true);
+    try {
+      const uploaded: string[] = [];
+      for (let i = 0; i < newFiles.length; i++) {
+        const nf = newFiles[i];
+        const ext = (nf.file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${product.id}/edit-${Date.now()}-${i}.${ext}`;
+        const up = await supabase.storage.from("products").upload(path, nf.file, { contentType: nf.file.type });
+        if (up.error) throw up.error;
+        uploaded.push(supabase.storage.from("products").getPublicUrl(path).data.publicUrl);
+      }
+      const finalImages = [...images, ...uploaded];
+
+      const { error } = await supabase.from("products").update({
+        title, description: desc,
+        stock: Number(stock) || 0,
+        unit,
+        category_id: category || null,
+        price_mga: Math.max(0, Math.round(Number(price))),
+        images: finalImages,
+      } as any).eq("id", product.id);
+      if (error) throw error;
+      toast.success("Produit mis à jour ✅");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erreur");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 md:items-center" onClick={onClose}>
+      <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between pb-2">
+          <h3 className="font-black">Modifier le produit</h3>
+          <button onClick={onClose} className="rounded p-1 hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : "text-mada-green"}`}>{titleErr ?? `✓ ${title.trim().length} caractères`}</div>
+          </div>
+          <div>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} placeholder="Description" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : "text-mada-green"}`}>{descErr ?? `✓ ${countWords(desc)} mots`}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs">Prix (MGA)
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            </label>
+            <label className="text-xs">Stock
+              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            </label>
+            <label className="text-xs">Unité
+              <input list="units-list-edit" value={unit} onChange={(e) => setUnit(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+              <datalist id="units-list-edit">{UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
+            </label>
+            <label className="text-xs">Catégorie
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <option value="">—</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold mb-1">Images ({images.length + newFiles.length}/{MAX_IMAGES})</div>
+            <div className="grid grid-cols-4 gap-2">
+              {images.map((url, i) => (
+                <div key={url} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <button onClick={() => setImages((x) => x.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {newFiles.map((nf, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden border-2 border-mada-green">
+                  <img src={nf.preview} alt="" className="h-full w-full object-cover" />
+                  <button onClick={() => setNewFiles((x) => x.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <label className="mt-2 block">
+              <span className="text-[10px] text-muted-foreground">Ajouter d'autres images</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => addNewFiles(e.target.files)} className="mt-1 block w-full text-xs" />
+            </label>
+          </div>
+
+          <button onClick={save} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-mada-red py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50">
+            <Save className="h-4 w-4" /> {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
