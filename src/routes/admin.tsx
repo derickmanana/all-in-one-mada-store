@@ -174,24 +174,31 @@ function DepositsManager() {
 function LogisticsPanel() {
   const [stats, setStats] = useState({ in_transit: 0, shipped: 0, delivered: 0, late: 0 });
   const [rows, setRows] = useState<any[]>([]);
+  async function loadLogistics() {
+    const { data } = await supabase
+      .from("orders")
+      .select("id, product_title, tracking_status, status, depart_at, eta_at, courier_name, shipping_mode, depart_city, total_mga, created_at" as any)
+      .in("status", ["expedie", "livre"] as any)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const list = (data ?? []) as any[];
+    setRows(list);
+    const now = Date.now();
+    setStats({
+      in_transit: list.filter((r) => r.tracking_status === "in_transit").length,
+      shipped: list.filter((r) => r.tracking_status === "shipped").length,
+      delivered: list.filter((r) => r.tracking_status === "delivered" || r.status === "livre").length,
+      late: list.filter((r) => r.eta_at && new Date(r.eta_at).getTime() < now && r.status !== "livre" && r.tracking_status !== "delivered").length,
+    });
+  }
+  useEffect(() => { loadLogistics(); }, []);
+  // Realtime sync across client/vendeur/admin
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id, product_title, tracking_status, status, depart_at, eta_at, courier_name, shipping_mode, depart_city, total_mga, created_at" as any)
-        .in("status", ["expedie", "livre"] as any)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      const list = (data ?? []) as any[];
-      setRows(list);
-      const now = Date.now();
-      setStats({
-        in_transit: list.filter((r) => r.tracking_status === "in_transit").length,
-        shipped: list.filter((r) => r.tracking_status === "shipped").length,
-        delivered: list.filter((r) => r.tracking_status === "delivered" || r.status === "livre").length,
-        late: list.filter((r) => r.eta_at && new Date(r.eta_at).getTime() < now && r.status !== "livre" && r.tracking_status !== "delivered").length,
-      });
-    })();
+    const ch = supabase
+      .channel("admin-logistics-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => loadLogistics())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []);
   const cards = [
     { label: "Expédiées", value: stats.shipped, color: "from-purple-500 to-indigo-500" },
