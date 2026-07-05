@@ -16,33 +16,29 @@ const UNIT_PRESETS = [
   "unité", "pièce", "paire", "boîte", "plaquette", "sachet", "lot",
   "g", "kg", "mL", "L",
   "cm", "m", "m²", "m³", "pouce",
+  "Ah", "W", "V",
 ];
 
-// Validation rules
-const TITLE_MIN_CHARS = 12;
-const TITLE_MAX_WORDS = 40;
-const DESC_MIN_WORDS = 60;
-const DESC_MAX_WORDS = 480;
-
-function countWords(s: string): number {
-  const t = (s || "").trim();
-  if (!t) return 0;
-  return t.split(/\s+/).length;
-}
+// Validation rules (CHARACTERS, not words)
+const TITLE_MIN = 15;
+const TITLE_MAX = 30;
+const DESC_MIN = 60;
+const DESC_MAX = 360;
 
 function validateTitle(t: string): string | null {
-  if (t.trim().length < TITLE_MIN_CHARS) return `Titre trop court (min ${TITLE_MIN_CHARS} caractères)`;
-  if (countWords(t) > TITLE_MAX_WORDS) return `Titre trop long (max ${TITLE_MAX_WORDS} mots)`;
+  const n = t.trim().length;
+  if (n < TITLE_MIN) return `Titre trop court (${n}/${TITLE_MIN} caractères)`;
+  if (n > TITLE_MAX) return `Titre trop long (${n}/${TITLE_MAX} caractères)`;
   return null;
 }
 function validateDesc(d: string): string | null {
-  const w = countWords(d);
-  if (w < DESC_MIN_WORDS) return `Description trop courte (${w}/${DESC_MIN_WORDS} mots)`;
-  if (w > DESC_MAX_WORDS) return `Description trop longue (${w}/${DESC_MAX_WORDS} mots)`;
+  const n = d.trim().length;
+  if (n < DESC_MIN) return `Description trop courte (${n}/${DESC_MIN} caractères)`;
+  if (n > DESC_MAX) return `Description trop longue (${n}/${DESC_MAX} caractères)`;
   return null;
 }
 
-type Variant = { price_mga: number; colors: string[]; sizes: string[] };
+type Variant = { price_mga: number; colors: string[]; sizes: string[]; units: string[]; custom?: string };
 type ImageEntry = { file: File; preview: string; variant: Variant };
 
 type Product = {
@@ -60,6 +56,65 @@ type Product = {
 };
 type Category = { id: string; name: string };
 
+function emptyVariant(): Variant {
+  return { price_mga: 0, colors: [], sizes: [], units: [] };
+}
+
+// ────────────────────────────────────────────────────────────
+// Reusable Variant editor (per image)
+// ────────────────────────────────────────────────────────────
+function VariantEditor({
+  index, variant, onChange, onRemove,
+}: { index: number; variant: Variant; onChange: (v: Variant) => void; onRemove?: () => void }) {
+  function toggle(key: "colors" | "sizes" | "units", value: string) {
+    const cur = variant[key];
+    onChange({ ...variant, [key]: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value] });
+  }
+  return (
+    <div className="flex-1 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-bold">Variante #{index + 1}</div>
+        {onRemove && <button onClick={onRemove} className="rounded p-1 text-destructive hover:bg-destructive/10"><X className="h-3 w-3" /></button>}
+      </div>
+      <div>
+        <label className="text-[10px] font-bold uppercase">Prix (MGA) *</label>
+        <input type="number" value={variant.price_mga || ""} onChange={(ev) => onChange({ ...variant, price_mga: Number(ev.target.value) })} placeholder="ex. 45000" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+        {variant.price_mga > 0 && <div className="mt-1 text-[10px] text-muted-foreground">≈ {formatUSDT(variant.price_mga)}</div>}
+      </div>
+      <div>
+        <div className="text-[10px] font-bold uppercase mb-1">Couleurs</div>
+        <div className="flex flex-wrap gap-1">
+          {COLOR_PRESETS.map((c) => (
+            <button key={c} type="button" onClick={() => toggle("colors", c)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${variant.colors.includes(c) ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"}`}>{c}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="text-[10px] font-bold uppercase mb-1">Tailles / pointures</div>
+        <div className="flex flex-wrap gap-1">
+          {[...SIZE_PRESETS, ...SHOE_PRESETS].map((s) => (
+            <button key={s} type="button" onClick={() => toggle("sizes", s)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${variant.sizes.includes(s) ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"}`}>{s}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="text-[10px] font-bold uppercase mb-1">Unités (kg, L, m², W, V, Ah…)</div>
+        <div className="flex flex-wrap gap-1">
+          {UNIT_PRESETS.map((u) => (
+            <button key={u} type="button" onClick={() => toggle("units", u)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${variant.units.includes(u) ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"}`}>{u}</button>
+          ))}
+        </div>
+        <input
+          value={variant.custom || ""}
+          onChange={(e) => onChange({ ...variant, custom: e.target.value })}
+          placeholder="Autre (saisie libre) : ex. 200mg, 5A, 12kWh…"
+          className="mt-1 w-full rounded-lg border border-border bg-card px-2 py-1 text-[11px]"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: string; vendorActive: boolean }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [cats, setCats] = useState<Category[]>([]);
@@ -67,7 +122,6 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [stock, setStock] = useState("1");
-  const [unit, setUnit] = useState<string>("unité");
   const [category, setCategory] = useState<string>("");
   const [entries, setEntries] = useState<ImageEntry[]>([]);
   const [video, setVideo] = useState<File | null>(null);
@@ -77,7 +131,6 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
 
   const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
   const descErr = useMemo(() => (desc ? validateDesc(desc) : null), [desc]);
-  const descWords = useMemo(() => countWords(desc), [desc]);
 
   async function load() {
     const [p, c] = await Promise.all([
@@ -104,7 +157,6 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   }
   useEffect(() => {
     load();
-    // Realtime: refresh when own products change (any tab / device)
     const ch = supabase
       .channel(`vendor-products-${vendorId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "products", filter: `vendor_id=eq.${vendorId}` }, () => load())
@@ -121,20 +173,13 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       if (entries.length + ok.length >= MAX_IMAGES) { toast.error(`Max ${MAX_IMAGES} images`); break; }
       if (!ALLOWED_TYPES.includes(f.type)) { toast.error(`${f.name}: format non supporté`); continue; }
       if (f.size > MAX_IMG_MB * 1024 * 1024) { toast.error(`${f.name}: > ${MAX_IMG_MB} Mo`); continue; }
-      ok.push({ file: f, preview: URL.createObjectURL(f), variant: { price_mga: 0, colors: [], sizes: [] } });
+      ok.push({ file: f, preview: URL.createObjectURL(f), variant: emptyVariant() });
     }
     setEntries((e) => [...e, ...ok]);
   }
 
-  function updateVariant(i: number, patch: Partial<Variant>) {
-    setEntries((e) => e.map((x, idx) => (idx === i ? { ...x, variant: { ...x.variant, ...patch } } : x)));
-  }
-  function toggleInList(i: number, key: "colors" | "sizes", value: string) {
-    setEntries((e) => e.map((x, idx) => {
-      if (idx !== i) return x;
-      const cur = x.variant[key];
-      return { ...x, variant: { ...x.variant, [key]: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value] } };
-    }));
+  function setVariant(i: number, v: Variant) {
+    setEntries((e) => e.map((x, idx) => (idx === i ? { ...x, variant: v } : x)));
   }
   function removeEntry(i: number) { setEntries((e) => e.filter((_, idx) => idx !== i)); }
 
@@ -172,6 +217,8 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       }
 
       const minPrice = Math.min(...variants.map((v) => v.price_mga));
+      // Aggregate units across variants for legacy `unit` column (first found or 'unité')
+      const firstUnit = variants.flatMap((v: any) => v.units || [])[0] || "unité";
 
       const { error } = await supabase.from("products").insert({
         vendor_id: vendorId,
@@ -182,12 +229,12 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
         images: urls,
         video_url,
         variants,
-        unit: unit || "unité",
+        unit: firstUnit,
       } as any);
       if (error) throw error;
       toast.success("Produit publié ✅");
       setShowForm(false);
-      setTitle(""); setDesc(""); setStock("1"); setUnit("unité"); setEntries([]); setVideo(null);
+      setTitle(""); setDesc(""); setStock("1"); setEntries([]); setVideo(null);
       load();
     } catch (e: any) {
       toast.error(e.message ?? "Erreur");
@@ -218,6 +265,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
     );
   }
 
+  const titleLen = title.trim().length;
+  const descLen = desc.trim().length;
+
   return (
     <div className="space-y-4">
       <button onClick={() => setShowForm((v) => !v)} className="inline-flex items-center gap-2 rounded-xl bg-mada-red px-4 py-2 text-sm font-bold text-primary-foreground">
@@ -228,23 +278,19 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       {showForm && (
         <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
           <div>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Titre du produit (min ${TITLE_MIN_CHARS} caractères)`} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            {title && (
-              <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : "text-mada-green"}`}>
-                {titleErr ?? `✓ ${title.trim().length} caractères · ${countWords(title)} mots`}
-              </div>
-            )}
-          </div>
-          <div>
-            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={`Description (${DESC_MIN_WORDS} à ${DESC_MAX_WORDS} mots)`} rows={5} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : desc ? "text-mada-green" : "text-muted-foreground"}`}>
-              {descErr ?? (desc ? `✓ ${descWords} mots` : `${DESC_MIN_WORDS}–${DESC_MAX_WORDS} mots requis`)}
+            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX + 20} placeholder={`Titre (${TITLE_MIN}–${TITLE_MAX} caractères)`} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : title ? "text-mada-green" : "text-muted-foreground"}`}>
+              {titleErr ?? (title ? `✓ ${titleLen}/${TITLE_MAX} caractères` : `${TITLE_MIN}–${TITLE_MAX} caractères requis`)}
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={DESC_MAX + 40} placeholder={`Description (${DESC_MIN}–${DESC_MAX} caractères)`} rows={5} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : desc ? "text-mada-green" : "text-muted-foreground"}`}>
+              {descErr ?? (desc ? `✓ ${descLen}/${DESC_MAX} caractères` : `${DESC_MIN}–${DESC_MAX} caractères requis`)}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Stock" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <input list="units-list" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Unité" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <datalist id="units-list">{UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
               {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -255,6 +301,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
               <span className="text-xs font-bold">Images (max {MAX_IMAGES}, {MAX_IMG_MB} Mo, JPG/PNG/WEBP)</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => addFiles(e.target.files)} className="mt-1 block w-full text-xs" />
             </label>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              Chaque image devient une variante avec ses propres couleurs, tailles et unités (kg, L, m², W, V, Ah…).
+            </div>
           </div>
 
           {entries.length > 0 && (
@@ -263,33 +312,7 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                 <div key={i} className="rounded-xl border border-border bg-background p-3">
                   <div className="flex gap-3">
                     <img src={e.preview} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-xs font-bold">Variante #{i + 1}</div>
-                        <button onClick={() => removeEntry(i)} className="rounded p-1 text-destructive hover:bg-destructive/10"><X className="h-3 w-3" /></button>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold uppercase">Prix (MGA) *</label>
-                        <input type="number" value={e.variant.price_mga || ""} onChange={(ev) => updateVariant(i, { price_mga: Number(ev.target.value) })} placeholder="ex. 45000" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
-                        {e.variant.price_mga > 0 && <div className="mt-1 text-[10px] text-muted-foreground">≈ {formatUSDT(e.variant.price_mga)}</div>}
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold uppercase mb-1">Couleurs</div>
-                        <div className="flex flex-wrap gap-1">
-                          {COLOR_PRESETS.map((c) => (
-                            <button key={c} type="button" onClick={() => toggleInList(i, "colors", c)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.colors.includes(c) ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"}`}>{c}</button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold uppercase mb-1">Tailles / pointures</div>
-                        <div className="flex flex-wrap gap-1">
-                          {[...SIZE_PRESETS, ...SHOE_PRESETS].map((s) => (
-                            <button key={s} type="button" onClick={() => toggleInList(i, "sizes", s)} className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${e.variant.sizes.includes(s) ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"}`}>{s}</button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                    <VariantEditor index={i} variant={e.variant} onChange={(v) => setVariant(i, v)} onRemove={() => removeEntry(i)} />
                   </div>
                 </div>
               ))}
@@ -358,7 +381,7 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
 }
 
 // ────────────────────────────────────────────────────────────
-// Edit modal — full product update (title, desc, price, stock, unit, category, images, variants)
+// Edit modal — full product update including per-image variants
 // ────────────────────────────────────────────────────────────
 function EditProductModal({
   product, categories, onClose, onSaved,
@@ -366,33 +389,60 @@ function EditProductModal({
   const [title, setTitle] = useState(product.title);
   const [desc, setDesc] = useState(product.description || "");
   const [stock, setStock] = useState(String(product.stock));
-  const [unit, setUnit] = useState(product.unit || "unité");
   const [category, setCategory] = useState(product.category_id || "");
-  const [price, setPrice] = useState(String(product.price_mga));
   const [images, setImages] = useState<string[]>(product.images || []);
   const [newFiles, setNewFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [variants, setVariants] = useState<Variant[]>(() => {
+    const raw = Array.isArray(product.variants) ? product.variants : [];
+    const list: Variant[] = (product.images || []).map((_url, i) => {
+      const found = raw.find((v: any) => v.image_index === i);
+      return {
+        price_mga: Number(found?.price_mga) || product.price_mga || 0,
+        colors: Array.isArray(found?.colors) ? found.colors : [],
+        sizes: Array.isArray(found?.sizes) ? found.sizes : [],
+        units: Array.isArray(found?.units) ? found.units : (product.unit ? [product.unit] : []),
+        custom: found?.custom || "",
+      };
+    });
+    return list;
+  });
   const [saving, setSaving] = useState(false);
 
   const titleErr = validateTitle(title);
-  const descErr = desc ? validateDesc(desc) : `Description requise (${DESC_MIN_WORDS}–${DESC_MAX_WORDS} mots)`;
+  const descErr = validateDesc(desc);
+  const titleLen = title.trim().length;
+  const descLen = desc.trim().length;
 
   function addNewFiles(files: FileList | null) {
     if (!files) return;
     const ok: { file: File; preview: string }[] = [];
+    const newVars: Variant[] = [];
     for (const f of Array.from(files)) {
       if (images.length + newFiles.length + ok.length >= MAX_IMAGES) { toast.error(`Max ${MAX_IMAGES}`); break; }
       if (!ALLOWED_TYPES.includes(f.type)) { toast.error(`${f.name}: format non supporté`); continue; }
       if (f.size > MAX_IMG_MB * 1024 * 1024) { toast.error(`${f.name}: trop lourd`); continue; }
       ok.push({ file: f, preview: URL.createObjectURL(f) });
+      newVars.push(emptyVariant());
     }
     setNewFiles((n) => [...n, ...ok]);
+    setVariants((v) => [...v, ...newVars]);
+  }
+
+  function removeImage(i: number) {
+    setImages((x) => x.filter((_, idx) => idx !== i));
+    setVariants((v) => v.filter((_, idx) => idx !== i));
+  }
+  function removeNewFile(i: number) {
+    setNewFiles((x) => x.filter((_, idx) => idx !== i));
+    setVariants((v) => v.filter((_, idx) => idx !== images.length + i));
   }
 
   async function save() {
     if (titleErr) return toast.error(titleErr);
     if (descErr) return toast.error(descErr);
     if (images.length + newFiles.length === 0) return toast.error("Au moins une image");
-    if (Number(price) <= 0) return toast.error("Prix invalide");
+    if (variants.some((v) => !v.price_mga || v.price_mga <= 0))
+      return toast.error("Prix obligatoire pour chaque variante");
 
     setSaving(true);
     try {
@@ -406,14 +456,18 @@ function EditProductModal({
         uploaded.push(supabase.storage.from("products").getPublicUrl(path).data.publicUrl);
       }
       const finalImages = [...images, ...uploaded];
+      const finalVariants = variants.slice(0, finalImages.length).map((v, i) => ({ image_index: i, ...v }));
+      const minPrice = Math.min(...finalVariants.map((v: any) => v.price_mga));
+      const firstUnit = finalVariants.flatMap((v: any) => v.units || [])[0] || product.unit || "unité";
 
       const { error } = await supabase.from("products").update({
         title, description: desc,
         stock: Number(stock) || 0,
-        unit,
+        unit: firstUnit,
         category_id: category || null,
-        price_mga: Math.max(0, Math.round(Number(price))),
+        price_mga: minPrice,
         images: finalImages,
+        variants: finalVariants,
       } as any).eq("id", product.id);
       if (error) throw error;
       toast.success("Produit mis à jour ✅");
@@ -425,6 +479,8 @@ function EditProductModal({
     }
   }
 
+  const totalImgs = images.length + newFiles.length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 md:items-center" onClick={onClose}>
       <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -435,23 +491,16 @@ function EditProductModal({
 
         <div className="space-y-3">
           <div>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : "text-mada-green"}`}>{titleErr ?? `✓ ${title.trim().length} caractères`}</div>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX + 20} placeholder="Titre" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${titleErr ? "text-destructive" : "text-mada-green"}`}>{titleErr ?? `✓ ${titleLen}/${TITLE_MAX} caractères`}</div>
           </div>
           <div>
-            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} placeholder="Description" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : "text-mada-green"}`}>{descErr ?? `✓ ${countWords(desc)} mots`}</div>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} maxLength={DESC_MAX + 40} placeholder="Description" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+            <div className={`mt-1 text-[10px] ${descErr ? "text-destructive" : "text-mada-green"}`}>{descErr ?? `✓ ${descLen}/${DESC_MAX} caractères`}</div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs">Prix (MGA)
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            </label>
             <label className="text-xs">Stock
               <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            </label>
-            <label className="text-xs">Unité
-              <input list="units-list-edit" value={unit} onChange={(e) => setUnit(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-              <datalist id="units-list-edit">{UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
             </label>
             <label className="text-xs">Catégorie
               <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
@@ -462,12 +511,12 @@ function EditProductModal({
           </div>
 
           <div>
-            <div className="text-xs font-bold mb-1">Images ({images.length + newFiles.length}/{MAX_IMAGES})</div>
+            <div className="text-xs font-bold mb-1">Images ({totalImgs}/{MAX_IMAGES})</div>
             <div className="grid grid-cols-4 gap-2">
               {images.map((url, i) => (
                 <div key={url} className="relative aspect-square rounded-lg overflow-hidden border border-border">
                   <img src={url} alt="" className="h-full w-full object-cover" />
-                  <button onClick={() => setImages((x) => x.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
+                  <button onClick={() => removeImage(i)} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
@@ -475,7 +524,7 @@ function EditProductModal({
               {newFiles.map((nf, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden border-2 border-mada-green">
                   <img src={nf.preview} alt="" className="h-full w-full object-cover" />
-                  <button onClick={() => setNewFiles((x) => x.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
+                  <button onClick={() => removeNewFile(i)} className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-white">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
@@ -485,6 +534,21 @@ function EditProductModal({
               <span className="text-[10px] text-muted-foreground">Ajouter d'autres images</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => addNewFiles(e.target.files)} className="mt-1 block w-full text-xs" />
             </label>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs font-bold">Variantes (prix, couleurs, tailles, unités)</div>
+            {variants.map((v, i) => {
+              const src = i < images.length ? images[i] : newFiles[i - images.length]?.preview;
+              return (
+                <div key={i} className="rounded-xl border border-border bg-background p-3">
+                  <div className="flex gap-3">
+                    {src && <img src={src} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />}
+                    <VariantEditor index={i} variant={v} onChange={(nv) => setVariants((arr) => arr.map((x, idx) => (idx === i ? nv : x)))} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <button onClick={save} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-mada-red py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50">
