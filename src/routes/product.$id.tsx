@@ -14,7 +14,7 @@ export const Route = createFileRoute("/product/$id")({
   component: ProductPage,
 });
 
-type Variant = { image_index: number; price_mga: number; colors: string[]; sizes: string[] };
+type Variant = { image_index: number; price_mga: number; colors: string[]; sizes: string[]; units?: string[]; custom?: string };
 type Comment = { id: string; user_id: string; author_name: string | null; content: string; created_at: string };
 
 function ProductPage() {
@@ -314,6 +314,19 @@ function ProductPage() {
                   {currentVariant.sizes.map((s) => (
                     <button key={s} onClick={() => setSize(s)} className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${size === s ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"}`}>{s}</button>
                   ))}
+                </div>
+              </div>
+            )}
+            {((currentVariant?.units && currentVariant.units.length > 0) || currentVariant?.custom) && (
+              <div>
+                <div className="text-xs font-bold uppercase mb-2">Unité / mesure</div>
+                <div className="flex flex-wrap gap-2">
+                  {currentVariant?.units?.map((u) => (
+                    <span key={u} className="rounded-full border border-mada-red/40 bg-mada-red/5 px-3 py-1 text-xs font-bold text-mada-red">{u}</span>
+                  ))}
+                  {currentVariant?.custom && (
+                    <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{currentVariant.custom}</span>
+                  )}
                 </div>
               </div>
             )}
