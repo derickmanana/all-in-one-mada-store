@@ -14,7 +14,7 @@ export const Route = createFileRoute("/product/$id")({
   component: ProductPage,
 });
 
-type Variant = { image_index: number; price_mga: number; colors: string[]; sizes: string[] };
+type Variant = { image_index: number; price_mga: number; colors: string[]; sizes: string[]; units?: string[]; custom?: string };
 type Comment = { id: string; user_id: string; author_name: string | null; content: string; created_at: string };
 
 function ProductPage() {
