@@ -317,6 +317,19 @@ function ProductPage() {
                 </div>
               </div>
             )}
+            {((currentVariant?.units && currentVariant.units.length > 0) || currentVariant?.custom) && (
+              <div>
+                <div className="text-xs font-bold uppercase mb-2">Unité / mesure</div>
+                <div className="flex flex-wrap gap-2">
+                  {currentVariant?.units?.map((u) => (
+                    <span key={u} className="rounded-full border border-mada-red/40 bg-mada-red/5 px-3 py-1 text-xs font-bold text-mada-red">{u}</span>
+                  ))}
+                  {currentVariant?.custom && (
+                    <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{currentVariant.custom}</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="text-xs font-bold uppercase mb-2">Quantité</div>
