@@ -167,6 +167,23 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             {role === "vendeur" && !o.vendor_released && o.auto_release_at && (
               <div className="mt-1 text-[10px] text-muted-foreground">Auto-libération: {new Date(o.auto_release_at).toLocaleDateString("fr-FR")}</div>
             )}
+            {role === "client" && (o.status === "livre" || o.status === "annule" || o.status === "rembourse") && (
+              <button
+                onClick={async () => {
+                  if (!confirm("Masquer cette commande de votre historique ?")) return;
+                  const { error } = await supabase.from("orders").update({ client_hidden: true } as any).eq("id", o.id);
+                  if (error) return toast.error(error.message);
+                  toast.success("Commande masquée");
+                  load();
+                }}
+                className="mt-2 ml-2 text-[10px] font-bold text-muted-foreground hover:text-destructive underline"
+              >
+                🗑️ Supprimer de l'historique
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
           </div>
         </div>
       ))}
