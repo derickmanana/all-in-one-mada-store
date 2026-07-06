@@ -184,9 +184,6 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
           </div>
         </div>
       ))}
-          </div>
-        </div>
-      ))}
 
       {shipOrder && <ShippingModal order={shipOrder} onClose={() => setShipOrder(null)} onDone={load} />}
     </div>
