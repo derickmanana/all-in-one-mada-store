@@ -27,7 +27,11 @@ export function MarketplaceFeed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cartCount, setCartCount] = useState(0);
+  const [imgSearching, setImgSearching] = useState(false);
+  const [imgBadge, setImgBadge] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const analyze = useServerFn(analyzeProductImage);
 
   useEffect(() => {
     supabase.from("categories").select("*").then((r) => setCats((r.data ?? []) as Category[]));
