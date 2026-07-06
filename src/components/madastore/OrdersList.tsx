@@ -54,11 +54,13 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   async function load() {
     setLoading(true);
     const col = role === "client" ? "client_id" : "vendor_id";
-    const { data } = await supabase
+    let req = supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address" as any)
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden" as any)
       .eq(col, userId)
       .order("created_at", { ascending: false });
+    if (role === "client") req = req.eq("client_hidden", false);
+    const { data } = await req;
     setOrders((data ?? []) as any);
     setLoading(false);
   }
