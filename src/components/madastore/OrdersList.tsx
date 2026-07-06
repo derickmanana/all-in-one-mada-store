@@ -18,6 +18,8 @@ type Order = {
   auto_release_at?: string | null;
   tracking_status?: string | null;
   shipping_address?: string | null;
+  tracking_code?: string | null;
+  client_hidden?: boolean;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -52,11 +54,13 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   async function load() {
     setLoading(true);
     const col = role === "client" ? "client_id" : "vendor_id";
-    const { data } = await supabase
+    let req = supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address" as any)
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden" as any)
       .eq(col, userId)
       .order("created_at", { ascending: false });
+    if (role === "client") req = req.eq("client_hidden", false);
+    const { data } = await req;
     setOrders((data ?? []) as any);
     setLoading(false);
   }
@@ -101,7 +105,18 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
           </div>
           <div className="flex-1 min-w-0">
             <div className="line-clamp-2 text-sm font-bold">{o.product_title}</div>
-            <div className="text-xs text-muted-foreground">Qté: {o.quantity} · {new Date(o.created_at).toLocaleDateString("fr-FR")}</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Qté: {o.quantity} · {new Date(o.created_at).toLocaleDateString("fr-FR")}</span>
+              {o.tracking_code && (
+                <button
+                  onClick={() => { navigator.clipboard?.writeText(o.tracking_code!); toast.success("Numéro copié"); }}
+                  className="rounded bg-mada-green/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-mada-green"
+                  title="Copier le numéro de suivi"
+                >
+                  #{o.tracking_code}
+                </button>
+              )}
+            </div>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-black text-mada-red">{formatMGA(o.total_mga)}</span>
               <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -151,6 +166,20 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             {o.vendor_released && <div className="mt-1 text-[10px] font-bold text-mada-green">Fonds vendeur débloqués</div>}
             {role === "vendeur" && !o.vendor_released && o.auto_release_at && (
               <div className="mt-1 text-[10px] text-muted-foreground">Auto-libération: {new Date(o.auto_release_at).toLocaleDateString("fr-FR")}</div>
+            )}
+            {role === "client" && (o.status === "livre" || o.status === "annule" || o.status === "rembourse") && (
+              <button
+                onClick={async () => {
+                  if (!confirm("Masquer cette commande de votre historique ?")) return;
+                  const { error } = await supabase.from("orders").update({ client_hidden: true } as any).eq("id", o.id);
+                  if (error) return toast.error(error.message);
+                  toast.success("Commande masquée");
+                  load();
+                }}
+                className="mt-2 ml-2 text-[10px] font-bold text-muted-foreground hover:text-destructive underline"
+              >
+                🗑️ Supprimer de l'historique
+              </button>
             )}
           </div>
         </div>

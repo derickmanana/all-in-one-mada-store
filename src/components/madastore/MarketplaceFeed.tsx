@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMGA } from "./Money";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart, Camera, X, Loader2 } from "lucide-react";
+import { analyzeProductImage } from "@/lib/image-search.functions";
+import { toast } from "sonner";
 
 type Product = {
   id: string;
@@ -24,7 +27,11 @@ export function MarketplaceFeed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cartCount, setCartCount] = useState(0);
+  const [imgSearching, setImgSearching] = useState(false);
+  const [imgBadge, setImgBadge] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const analyze = useServerFn(analyzeProductImage);
 
   useEffect(() => {
     supabase.from("categories").select("*").then((r) => setCats((r.data ?? []) as Category[]));
@@ -50,10 +57,16 @@ export function MarketplaceFeed() {
         .from("products")
         .select("id, title, price_mga, images, category_id")
         .eq("is_active", true)
+        .order("click_count", { ascending: false })
+        .order("view_count", { ascending: false })
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
       if (cat) req = req.eq("category_id", cat);
-      if (q.trim()) req = req.ilike("title", `%${q.trim()}%`);
+      if (q.trim()) {
+        const tokens = q.trim().split(/\s+/).slice(0, 6);
+        const or = tokens.map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`).join(",");
+        req = req.or(or);
+      }
       const { data } = await req;
       const list = (data ?? []) as Product[];
       setHasMore(list.length === PAGE_SIZE);
@@ -84,6 +97,34 @@ export function MarketplaceFeed() {
     return () => io.disconnect();
   }, [products.length, hasMore, loadingMore, loading, fetchPage]);
 
+  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 6_000_000) return toast.error("Image trop grande (max 6 Mo)");
+    setImgSearching(true);
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+        r.onerror = reject;
+        r.readAsDataURL(f);
+      });
+      const out = await analyze({ data: { imageBase64: b64, mimeType: f.type || "image/jpeg" } });
+      if (out.error || !out.keywords) {
+        toast.error(out.error || "Aucun mot-clé détecté");
+      } else {
+        setQ(out.keywords);
+        setImgBadge(out.keywords);
+        toast.success("Recherche visuelle : " + out.keywords);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur");
+    } finally {
+      setImgSearching(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -93,8 +134,18 @@ export function MarketplaceFeed() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Rechercher..."
-            className="w-full rounded-full border-2 border-mada-red/20 bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-mada-red"
+            className="w-full rounded-full border-2 border-mada-red/20 bg-white pl-10 pr-10 py-2.5 text-sm outline-none focus:border-mada-red"
           />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={imgSearching}
+            title="Recherche par image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full bg-mada-green text-secondary-foreground disabled:opacity-50"
+          >
+            {imgSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
         </div>
         <Link
           to="/cart"
@@ -109,12 +160,22 @@ export function MarketplaceFeed() {
         </Link>
       </div>
 
+      {imgBadge && (
+        <div className="flex items-center gap-2 rounded-full bg-mada-green/10 px-3 py-1.5 text-xs">
+          <Camera className="h-3 w-3 text-mada-green" />
+          <span className="font-bold">Recherche visuelle:</span>
+          <span className="truncate">{imgBadge}</span>
+          <button onClick={() => { setImgBadge(null); setQ(""); }} className="ml-auto"><X className="h-3 w-3" /></button>
+        </div>
+      )}
+
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-6 px-6 scrollbar-hide">
         <CatChip active={cat === null} onClick={() => setCat(null)} label="Tout" icon="🌍" />
         {cats.map((c) => (
           <CatChip key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} label={c.name} icon={c.icon ?? "📦"} />
         ))}
       </div>
+
 
 
       {loading ? (
@@ -135,6 +196,7 @@ export function MarketplaceFeed() {
                 key={p.id}
                 to="/product/$id"
                 params={{ id: p.id }}
+                onClick={() => { supabase.rpc("increment_product_click" as any, { _product_id: p.id } as any).then(() => {}); }}
                 className="group overflow-hidden rounded-xl border border-border bg-white transition-all hover:border-mada-red hover:shadow-md active:scale-[0.98]"
               >
                 <div className="aspect-square overflow-hidden bg-muted">

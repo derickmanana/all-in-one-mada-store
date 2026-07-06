@@ -12,6 +12,7 @@ export const Route = createFileRoute("/order/$id/tracking")({ component: Trackin
 
 type OrderDetail = {
   id: string;
+  tracking_code: string | null;
   client_id: string;
   vendor_id: string;
   product_title: string;
@@ -63,7 +64,7 @@ function TrackingPage() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, client_id, vendor_id, product_title, product_image, quantity, total_mga, status, tracking_status, shipping_mode, courier_name, coop_name, depart_city, depart_at, eta_at, delivery_days_min, delivery_days_max, shipped_at, addresses(*), vendor_profiles!orders_vendor_id_fkey(shop_name, pickup_lat, pickup_lng, pickup_city)" as any,
+        "id, tracking_code, client_id, vendor_id, product_title, product_image, quantity, total_mga, status, tracking_status, shipping_mode, courier_name, coop_name, depart_city, depart_at, eta_at, delivery_days_min, delivery_days_max, shipped_at, addresses(*), vendor_profiles!orders_vendor_id_fkey(shop_name, pickup_lat, pickup_lng, pickup_city)" as any,
       )
       .eq("id", id)
       .maybeSingle();
@@ -184,6 +185,17 @@ function TrackingPage() {
       </div>
 
       <div className="space-y-4 pb-20">
+        {order.tracking_code && (
+          <button
+            onClick={() => { navigator.clipboard?.writeText(order.tracking_code!); toast.success("Numéro copié"); }}
+            className="w-full rounded-2xl border-2 border-dashed border-mada-green bg-mada-green/5 p-3 text-center"
+          >
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Numéro de suivi</div>
+            <div className="font-mono text-lg font-black text-mada-green">#{order.tracking_code}</div>
+            <div className="text-[10px] text-muted-foreground">Cliquer pour copier</div>
+          </button>
+        )}
+
         {/* Product */}
         <div className="flex gap-3 rounded-2xl border border-border bg-card p-3">
           {order.product_image && <img src={order.product_image} alt="" className="h-16 w-16 rounded-xl object-cover" />}
