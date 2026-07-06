@@ -57,10 +57,16 @@ export function MarketplaceFeed() {
         .from("products")
         .select("id, title, price_mga, images, category_id")
         .eq("is_active", true)
+        .order("click_count", { ascending: false })
+        .order("view_count", { ascending: false })
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
       if (cat) req = req.eq("category_id", cat);
-      if (q.trim()) req = req.ilike("title", `%${q.trim()}%`);
+      if (q.trim()) {
+        const tokens = q.trim().split(/\s+/).slice(0, 6);
+        const or = tokens.map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`).join(",");
+        req = req.or(or);
+      }
       const { data } = await req;
       const list = (data ?? []) as Product[];
       setHasMore(list.length === PAGE_SIZE);
