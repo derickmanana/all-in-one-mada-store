@@ -282,6 +282,7 @@ export type Database = {
           address_id: string | null
           auto_release_at: string | null
           buyer_confirmed_at: string | null
+          client_hidden: boolean
           client_id: string
           commission_mga: number
           coop_name: string | null
@@ -307,6 +308,7 @@ export type Database = {
           shipping_mode: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_mga: number
+          tracking_code: string | null
           tracking_status: string
           unit_price_mga: number
           updated_at: string
@@ -318,6 +320,7 @@ export type Database = {
           address_id?: string | null
           auto_release_at?: string | null
           buyer_confirmed_at?: string | null
+          client_hidden?: boolean
           client_id: string
           commission_mga?: number
           coop_name?: string | null
@@ -343,6 +346,7 @@ export type Database = {
           shipping_mode?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga: number
+          tracking_code?: string | null
           tracking_status?: string
           unit_price_mga: number
           updated_at?: string
@@ -354,6 +358,7 @@ export type Database = {
           address_id?: string | null
           auto_release_at?: string | null
           buyer_confirmed_at?: string | null
+          client_hidden?: boolean
           client_id?: string
           commission_mga?: number
           coop_name?: string | null
@@ -379,6 +384,7 @@ export type Database = {
           shipping_mode?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_mga?: number
+          tracking_code?: string | null
           tracking_status?: string
           unit_price_mga?: number
           updated_at?: string
@@ -464,6 +470,7 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          click_count: number
           created_at: string
           description: string | null
           id: string
@@ -478,9 +485,11 @@ export type Database = {
           variants: Json
           vendor_id: string
           video_url: string | null
+          view_count: number
         }
         Insert: {
           category_id?: string | null
+          click_count?: number
           created_at?: string
           description?: string | null
           id?: string
@@ -495,9 +504,11 @@ export type Database = {
           variants?: Json
           vendor_id: string
           video_url?: string | null
+          view_count?: number
         }
         Update: {
           category_id?: string | null
+          click_count?: number
           created_at?: string
           description?: string | null
           id?: string
@@ -512,6 +523,7 @@ export type Database = {
           variants?: Json
           vendor_id?: string
           video_url?: string | null
+          view_count?: number
         }
         Relationships: [
           {
@@ -825,6 +837,14 @@ export type Database = {
       haversine_km: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
+      }
+      increment_product_click: {
+        Args: { _product_id: string }
+        Returns: undefined
+      }
+      increment_product_view: {
+        Args: { _product_id: string }
+        Returns: undefined
       }
       place_order:
         | {
