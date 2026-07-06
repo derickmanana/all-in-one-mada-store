@@ -196,6 +196,7 @@ export function MarketplaceFeed() {
                 key={p.id}
                 to="/product/$id"
                 params={{ id: p.id }}
+                onClick={() => { supabase.rpc("increment_product_click" as any, { _product_id: p.id } as any).then(() => {}); }}
                 className="group overflow-hidden rounded-xl border border-border bg-white transition-all hover:border-mada-red hover:shadow-md active:scale-[0.98]"
               >
                 <div className="aspect-square overflow-hidden bg-muted">
