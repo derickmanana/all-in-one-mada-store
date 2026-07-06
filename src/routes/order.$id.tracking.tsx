@@ -11,6 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/order/$id/tracking")({ component: TrackingPage });
 
 type OrderDetail = {
+  id: string;
   tracking_code: string | null;
   client_id: string;
   vendor_id: string;
