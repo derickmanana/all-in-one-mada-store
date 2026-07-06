@@ -185,6 +185,17 @@ function TrackingPage() {
       </div>
 
       <div className="space-y-4 pb-20">
+        {order.tracking_code && (
+          <button
+            onClick={() => { navigator.clipboard?.writeText(order.tracking_code!); toast.success("Numéro copié"); }}
+            className="w-full rounded-2xl border-2 border-dashed border-mada-green bg-mada-green/5 p-3 text-center"
+          >
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Numéro de suivi</div>
+            <div className="font-mono text-lg font-black text-mada-green">#{order.tracking_code}</div>
+            <div className="text-[10px] text-muted-foreground">Cliquer pour copier</div>
+          </button>
+        )}
+
         {/* Product */}
         <div className="flex gap-3 rounded-2xl border border-border bg-card p-3">
           {order.product_image && <img src={order.product_image} alt="" className="h-16 w-16 rounded-xl object-cover" />}
