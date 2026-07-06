@@ -18,6 +18,8 @@ type Order = {
   auto_release_at?: string | null;
   tracking_status?: string | null;
   shipping_address?: string | null;
+  tracking_code?: string | null;
+  client_hidden?: boolean;
 };
 
 const STATUS_LABELS: Record<string, string> = {
