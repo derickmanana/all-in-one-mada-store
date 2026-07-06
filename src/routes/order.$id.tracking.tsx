@@ -64,7 +64,7 @@ function TrackingPage() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, client_id, vendor_id, product_title, product_image, quantity, total_mga, status, tracking_status, shipping_mode, courier_name, coop_name, depart_city, depart_at, eta_at, delivery_days_min, delivery_days_max, shipped_at, addresses(*), vendor_profiles!orders_vendor_id_fkey(shop_name, pickup_lat, pickup_lng, pickup_city)" as any,
+        "id, tracking_code, client_id, vendor_id, product_title, product_image, quantity, total_mga, status, tracking_status, shipping_mode, courier_name, coop_name, depart_city, depart_at, eta_at, delivery_days_min, delivery_days_max, shipped_at, addresses(*), vendor_profiles!orders_vendor_id_fkey(shop_name, pickup_lat, pickup_lng, pickup_city)" as any,
       )
       .eq("id", id)
       .maybeSingle();
