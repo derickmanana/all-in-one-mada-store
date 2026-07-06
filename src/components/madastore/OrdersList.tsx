@@ -105,7 +105,18 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
           </div>
           <div className="flex-1 min-w-0">
             <div className="line-clamp-2 text-sm font-bold">{o.product_title}</div>
-            <div className="text-xs text-muted-foreground">Qté: {o.quantity} · {new Date(o.created_at).toLocaleDateString("fr-FR")}</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Qté: {o.quantity} · {new Date(o.created_at).toLocaleDateString("fr-FR")}</span>
+              {o.tracking_code && (
+                <button
+                  onClick={() => { navigator.clipboard?.writeText(o.tracking_code!); toast.success("Numéro copié"); }}
+                  className="rounded bg-mada-green/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-mada-green"
+                  title="Copier le numéro de suivi"
+                >
+                  #{o.tracking_code}
+                </button>
+              )}
+            </div>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-black text-mada-red">{formatMGA(o.total_mga)}</span>
               <div className="flex items-center gap-1 flex-wrap justify-end">
