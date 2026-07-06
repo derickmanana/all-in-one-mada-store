@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMGA } from "./Money";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart, Camera, X, Loader2 } from "lucide-react";
+import { analyzeProductImage } from "@/lib/image-search.functions";
+import { toast } from "sonner";
 
 type Product = {
   id: string;
