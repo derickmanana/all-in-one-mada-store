@@ -48,6 +48,8 @@ function ProductPage() {
         const { data: v } = await supabase.from("vendor_profiles").select("id, shop_name, phone").eq("id", data.vendor_id).maybeSingle();
         setVendor(v);
         supabase.rpc("increment_product_view" as any, { _product_id: id } as any).then(() => {});
+        supabase.rpc("track_event" as any, { _event_type: "view", _product_id: id } as any).then(() => {});
+
       }
       setLoading(false);
     })();
