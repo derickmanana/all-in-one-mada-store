@@ -40,11 +40,25 @@ const STATUS_COLORS: Record<string, string> = {
 };
 const TRACK_LABEL: Record<string, string> = {
   prepare: "📦 Préparé",
-  shipped: "🚚 Expédié",
-  in_transit: "🛣️ En transit",
+  prepared: "📦 Colis préparé",
+  shipped: "🚚 Départ",
+  in_transit: "🛣️ En route",
+  nearby: "📍 À proximité",
+  at_depot: "🏢 En dépôt",
   arrived: "📍 Arrivé",
-  delivered: "✅ Livré",
+  delivered: "🏠 Livré",
+  cancelled: "❌ Annulé",
 };
+const VENDOR_STEPS: { id: string; label: string }[] = [
+  { id: "prepared", label: "📦 Préparé" },
+  { id: "shipped", label: "🚚 Départ" },
+  { id: "in_transit", label: "🛣️ En route" },
+  { id: "nearby", label: "📍 À proximité" },
+  { id: "at_depot", label: "🏢 En dépôt" },
+  { id: "delivered", label: "🏠 Livré" },
+  { id: "cancelled", label: "❌ Annuler" },
+];
+
 
 export function OrdersList({ userId, role }: { userId: string; role: "client" | "vendeur" }) {
   const [orders, setOrders] = useState<Order[]>([]);
