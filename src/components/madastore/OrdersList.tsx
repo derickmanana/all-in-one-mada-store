@@ -142,19 +142,32 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             </div>
 
             {/* Vendor actions */}
-            {role === "vendeur" && o.status === "paye" && (
+            {role === "vendeur" && o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
               <button onClick={() => setShipOrder(o)} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                🚚 Expédiée
+                🚚 Expédier
               </button>
             )}
-            {role === "vendeur" && o.status === "expedie" && o.tracking_status !== "in_transit" && (
-              <button onClick={() => markInTransit(o.id)} className="mt-2 rounded-lg bg-mada-red px-3 py-1 text-xs font-bold text-primary-foreground">
-                Aller Livrée →
-              </button>
+            {role === "vendeur" && (
+              <div className="mt-2 space-y-1">
+                <div className="text-[10px] font-bold uppercase text-muted-foreground">Statut du colis</div>
+                <div className="flex flex-wrap gap-1">
+                  {VENDOR_STEPS.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setTracking(o.id, s.id)}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors ${
+                        o.tracking_status === s.id
+                          ? "border-mada-red bg-mada-red text-primary-foreground"
+                          : "border-border bg-white hover:border-mada-red"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-            {role === "vendeur" && o.tracking_status === "in_transit" && (
-              <div className="mt-1 text-[10px] font-bold text-mada-red">En cours de livraison…</div>
-            )}
+
 
             {/* Tracking link for both */}
             {(o.status === "expedie" || o.status === "livre" || o.tracking_status === "in_transit") && (
