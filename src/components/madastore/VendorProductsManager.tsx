@@ -604,3 +604,119 @@ function EditProductModal({
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// Promo modal — remise % + durée (Flash si >= 20% avec échéance)
+// ────────────────────────────────────────────────────────────
+function PromoModal({
+  product, onClose, onSaved,
+}: { product: Product; onClose: () => void; onSaved: () => void }) {
+  const current = Number((product as any).discount_percent ?? 0);
+  const [percent, setPercent] = useState(current || 10);
+  const [hours, setHours] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const newPrice = Math.floor((product.price_mga * (100 - percent)) / 100);
+
+  async function save(clear = false) {
+    setSaving(true);
+    const until = clear || hours === null ? null : new Date(Date.now() + hours * 3600_000).toISOString();
+    const { error } = await supabase.rpc("vendor_set_promo" as any, {
+      _product_id: product.id,
+      _percent: clear ? 0 : percent,
+      _until: until,
+    } as any);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(clear ? "Promotion retirée" : "Promotion activée 🎉");
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+      <div className="w-full max-w-md rounded-t-3xl bg-white p-4 sm:rounded-3xl">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-black">Promotion · {product.title}</h3>
+          <button onClick={onClose}><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 text-[11px] font-bold uppercase text-muted-foreground">Remise</div>
+            <div className="flex flex-wrap gap-1.5">
+              {[5, 10, 15, 20, 30, 40, 50, 70].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setPercent(v)}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                    percent === v ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"
+                  }`}
+                >
+                  -{v}%
+                </button>
+              ))}
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={90}
+              value={percent}
+              onChange={(e) => setPercent(Number(e.target.value))}
+              className="mt-2 w-full accent-mada-red"
+            />
+          </div>
+
+          <div>
+            <div className="mb-1 text-[11px] font-bold uppercase text-muted-foreground">Durée</div>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { l: "Illimitée", v: null },
+                { l: "6 h ⚡", v: 6 },
+                { l: "24 h ⚡", v: 24 },
+                { l: "3 jours", v: 72 },
+                { l: "7 jours", v: 168 },
+              ].map((o) => (
+                <button
+                  key={o.l}
+                  onClick={() => setHours(o.v)}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                    hours === o.v ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"
+                  }`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+            {percent >= 20 && hours !== null && (
+              <div className="mt-1 text-[10px] font-bold text-mada-red">⚡ Apparaîtra dans la rubrique Flash</div>
+            )}
+          </div>
+
+          <div className="rounded-xl bg-muted p-3 text-sm">
+            <span className="text-muted-foreground line-through">{formatMGA(product.price_mga)}</span>{" "}
+            <span className="font-black text-mada-red">{formatMGA(newPrice)}</span>
+          </div>
+
+          <div className="flex gap-2">
+            {current > 0 && (
+              <button
+                onClick={() => save(true)}
+                disabled={saving}
+                className="rounded-xl border border-destructive px-3 py-2 text-xs font-bold text-destructive disabled:opacity-50"
+              >
+                Retirer
+              </button>
+            )}
+            <button
+              onClick={() => save(false)}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-mada-red py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50"
+            >
+              {saving ? "..." : "Activer la promo"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
