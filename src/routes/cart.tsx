@@ -131,8 +131,8 @@ function CartPage() {
               <ShippingQuoteCard
                 key={v}
                 vendorId={v}
-                clientLat={address?.latitude ?? null}
-                clientLng={address?.longitude ?? null}
+                addressId={address?.id ?? null}
+
                 onQuote={(q) => setQuotes((prev) => ({ ...prev, [v]: q }))}
               />
             ))}
