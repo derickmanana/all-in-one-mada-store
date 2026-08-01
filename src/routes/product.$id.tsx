@@ -73,9 +73,13 @@ function ProductPage() {
 
   const variants: Variant[] = Array.isArray(p?.variants) ? p.variants : [];
   const currentVariant = variants.find((v) => v.image_index === imgIdx) ?? variants[0];
-  const displayPrice = currentVariant?.price_mga ?? p?.price_mga ?? 0;
+  const basePrice = currentVariant?.price_mga ?? p?.price_mga ?? 0;
+  const promoPct =
+    p?.discount_percent > 0 && (!p?.promo_until || new Date(p.promo_until) > new Date()) ? p.discount_percent : 0;
+  const displayPrice = promoPct ? Math.floor((basePrice * (100 - promoPct)) / 100) : basePrice;
   const discounted = qty >= 10;
   const effUnit = discounted ? Math.floor(displayPrice * 0.98) : displayPrice;
+
 
   function openPopup(mode: "cart" | "buy") {
     setQty(1);
