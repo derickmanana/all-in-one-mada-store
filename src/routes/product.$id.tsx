@@ -55,6 +55,20 @@ function ProductPage() {
     })();
   }, [id]);
 
+  // Temps passé sur la fiche produit → apprentissage IA
+  useEffect(() => {
+    const start = Date.now();
+    return () => {
+      const ms = Date.now() - start;
+      if (ms > 2000) {
+        supabase
+          .rpc("track_event" as any, { _event_type: "dwell", _product_id: id, _dwell_ms: Math.min(ms, 600000) } as any)
+          .then(() => {});
+      }
+    };
+  }, [id]);
+
+
   async function reloadEngagement() {
     const [{ data: l, count }, { data: c }] = await Promise.all([
       supabase.from("product_likes").select("user_id", { count: "exact" }).eq("product_id", id),
