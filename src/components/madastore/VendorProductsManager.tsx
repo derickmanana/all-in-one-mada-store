@@ -367,7 +367,19 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                 </div>
                 <div className="p-3 space-y-1">
                   <div className="line-clamp-1 text-xs font-bold">{p.title}</div>
-                  <div className="text-sm font-black text-mada-red">{formatMGA(p.price_mga)}</div>
+                  {(p as any).discount_percent > 0 ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-black text-mada-red">
+                        {formatMGA(Math.floor((p.price_mga * (100 - (p as any).discount_percent)) / 100))}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground line-through">{formatMGA(p.price_mga)}</span>
+                      <span className="rounded-full bg-mada-green px-1.5 text-[9px] font-black text-secondary-foreground">
+                        -{(p as any).discount_percent}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-black text-mada-red">{formatMGA(p.price_mga)}</div>
+                  )}
                   <div className="text-[10px] text-muted-foreground">≈ {formatUSDT(p.price_mga)}</div>
                   <div className="text-[10px] text-muted-foreground">Stock: {p.stock} {p.unit || "unité"}</div>
                   <div className="flex items-center gap-2 pt-1 text-[10px] text-muted-foreground">
@@ -379,6 +391,12 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                     <button onClick={() => toggle(p)} className="rounded-lg border border-border px-2 py-1 text-[10px] font-bold">{p.is_active ? "Cacher" : "Activer"}</button>
                     <button onClick={() => remove(p.id)} className="rounded-lg border border-destructive p-1 text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
+                  <button
+                    onClick={() => setPromoFor(p)}
+                    className="mt-1 w-full inline-flex items-center justify-center gap-1 rounded-lg bg-mada-green px-2 py-1 text-[10px] font-black text-secondary-foreground"
+                  >
+                    <BadgePercent className="h-3 w-3" /> Créer une promo
+                  </button>
                 </div>
               </div>
             );
@@ -394,6 +412,15 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
           onSaved={() => { setEditing(null); load(); }}
         />
       )}
+
+      {promoFor && (
+        <PromoModal
+          product={promoFor}
+          onClose={() => setPromoFor(null)}
+          onSaved={() => { setPromoFor(null); load(); }}
+        />
+      )}
+
     </div>
   );
 }
