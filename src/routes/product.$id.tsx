@@ -347,8 +347,8 @@ function ProductPage() {
                 <AddressSelector userId={user.id} value={address?.id ?? null} onChange={setAddress} />
                 <ShippingQuoteCard
                   vendorId={p.vendor_id}
-                  clientLat={address?.latitude ?? null}
-                  clientLng={address?.longitude ?? null}
+                  addressId={address?.id ?? null}
+
                   onQuote={setQuote}
                 />
               </div>
