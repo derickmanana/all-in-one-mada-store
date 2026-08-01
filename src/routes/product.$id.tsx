@@ -48,10 +48,26 @@ function ProductPage() {
         const { data: v } = await supabase.from("vendor_profiles").select("id, shop_name, phone").eq("id", data.vendor_id).maybeSingle();
         setVendor(v);
         supabase.rpc("increment_product_view" as any, { _product_id: id } as any).then(() => {});
+        supabase.rpc("track_event" as any, { _event_type: "view", _product_id: id } as any).then(() => {});
+
       }
       setLoading(false);
     })();
   }, [id]);
+
+  // Temps passé sur la fiche produit → apprentissage IA
+  useEffect(() => {
+    const start = Date.now();
+    return () => {
+      const ms = Date.now() - start;
+      if (ms > 2000) {
+        supabase
+          .rpc("track_event" as any, { _event_type: "dwell", _product_id: id, _dwell_ms: Math.min(ms, 600000) } as any)
+          .then(() => {});
+      }
+    };
+  }, [id]);
+
 
   async function reloadEngagement() {
     const [{ data: l, count }, { data: c }] = await Promise.all([
@@ -73,9 +89,13 @@ function ProductPage() {
 
   const variants: Variant[] = Array.isArray(p?.variants) ? p.variants : [];
   const currentVariant = variants.find((v) => v.image_index === imgIdx) ?? variants[0];
-  const displayPrice = currentVariant?.price_mga ?? p?.price_mga ?? 0;
+  const basePrice = currentVariant?.price_mga ?? p?.price_mga ?? 0;
+  const promoPct =
+    p?.discount_percent > 0 && (!p?.promo_until || new Date(p.promo_until) > new Date()) ? p.discount_percent : 0;
+  const displayPrice = promoPct ? Math.floor((basePrice * (100 - promoPct)) / 100) : basePrice;
   const discounted = qty >= 10;
   const effUnit = discounted ? Math.floor(displayPrice * 0.98) : displayPrice;
+
 
   function openPopup(mode: "cart" | "buy") {
     setQty(1);
@@ -200,9 +220,18 @@ function ProductPage() {
         <div>
           <div className="flex items-baseline gap-2">
             <div className="text-3xl font-black text-mada-red">{formatMGA(displayPrice)}</div>
+            {promoPct > 0 && (
+              <>
+                <span className="text-sm text-muted-foreground line-through">{formatMGA(basePrice)}</span>
+                <span className="rounded-full bg-mada-red px-2 py-0.5 text-[10px] font-black text-primary-foreground">
+                  -{promoPct}%
+                </span>
+              </>
+            )}
             <div className="inline-block rounded-full bg-mada-green/10 px-2 py-0.5 text-[10px] font-bold text-mada-green">
               -2% dès 10
             </div>
+
           </div>
           <div className="text-sm text-muted-foreground">≈ {formatUSDT(displayPrice)}</div>
           <h2 className="mt-2 text-lg font-bold">{p.title}</h2>
@@ -347,8 +376,8 @@ function ProductPage() {
                 <AddressSelector userId={user.id} value={address?.id ?? null} onChange={setAddress} />
                 <ShippingQuoteCard
                   vendorId={p.vendor_id}
-                  clientLat={address?.latitude ?? null}
-                  clientLng={address?.longitude ?? null}
+                  addressId={address?.id ?? null}
+
                   onQuote={setQuote}
                 />
               </div>

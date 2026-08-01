@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA, formatUSDT } from "./Money";
-import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save } from "lucide-react";
+import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent } from "lucide-react";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGES = 10;
@@ -128,6 +128,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [saving, setSaving] = useState(false);
   const [engagement, setEngagement] = useState<Record<string, { likes: number; comments: number }>>({});
   const [editing, setEditing] = useState<Product | null>(null);
+  const [search, setSearch] = useState("");
+  const [promoFor, setPromoFor] = useState<Product | null>(null);
+
 
   const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
   const descErr = useMemo(() => (desc ? validateDesc(desc) : null), [desc]);
@@ -335,11 +338,26 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
         </div>
       )}
 
+      {products.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher dans mes produits..."
+            className="w-full rounded-full border-2 border-border bg-white pl-10 pr-3 py-2 text-sm outline-none focus:border-mada-red"
+          />
+        </div>
+      )}
+
       {products.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Aucun produit.</div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {products.map((p) => {
+          {products
+            .filter((p) => !search.trim() || p.title.toLowerCase().includes(search.trim().toLowerCase()))
+            .map((p) => {
+
             const eng = engagement[p.id] ?? { likes: 0, comments: 0 };
             return (
               <div key={p.id} className={`overflow-hidden rounded-2xl border border-border bg-card ${!p.is_active && "opacity-60"}`}>
@@ -349,7 +367,19 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                 </div>
                 <div className="p-3 space-y-1">
                   <div className="line-clamp-1 text-xs font-bold">{p.title}</div>
-                  <div className="text-sm font-black text-mada-red">{formatMGA(p.price_mga)}</div>
+                  {(p as any).discount_percent > 0 ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-black text-mada-red">
+                        {formatMGA(Math.floor((p.price_mga * (100 - (p as any).discount_percent)) / 100))}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground line-through">{formatMGA(p.price_mga)}</span>
+                      <span className="rounded-full bg-mada-green px-1.5 text-[9px] font-black text-secondary-foreground">
+                        -{(p as any).discount_percent}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-black text-mada-red">{formatMGA(p.price_mga)}</div>
+                  )}
                   <div className="text-[10px] text-muted-foreground">≈ {formatUSDT(p.price_mga)}</div>
                   <div className="text-[10px] text-muted-foreground">Stock: {p.stock} {p.unit || "unité"}</div>
                   <div className="flex items-center gap-2 pt-1 text-[10px] text-muted-foreground">
@@ -361,6 +391,12 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
                     <button onClick={() => toggle(p)} className="rounded-lg border border-border px-2 py-1 text-[10px] font-bold">{p.is_active ? "Cacher" : "Activer"}</button>
                     <button onClick={() => remove(p.id)} className="rounded-lg border border-destructive p-1 text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
+                  <button
+                    onClick={() => setPromoFor(p)}
+                    className="mt-1 w-full inline-flex items-center justify-center gap-1 rounded-lg bg-mada-green px-2 py-1 text-[10px] font-black text-secondary-foreground"
+                  >
+                    <BadgePercent className="h-3 w-3" /> Créer une promo
+                  </button>
                 </div>
               </div>
             );
@@ -376,6 +412,15 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
           onSaved={() => { setEditing(null); load(); }}
         />
       )}
+
+      {promoFor && (
+        <PromoModal
+          product={promoFor}
+          onClose={() => setPromoFor(null)}
+          onSaved={() => { setPromoFor(null); load(); }}
+        />
+      )}
+
     </div>
   );
 }
@@ -554,6 +599,122 @@ function EditProductModal({
           <button onClick={save} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-mada-red py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50">
             <Save className="h-4 w-4" /> {saving ? "Enregistrement..." : "Enregistrer les modifications"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Promo modal — remise % + durée (Flash si >= 20% avec échéance)
+// ────────────────────────────────────────────────────────────
+function PromoModal({
+  product, onClose, onSaved,
+}: { product: Product; onClose: () => void; onSaved: () => void }) {
+  const current = Number((product as any).discount_percent ?? 0);
+  const [percent, setPercent] = useState(current || 10);
+  const [hours, setHours] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const newPrice = Math.floor((product.price_mga * (100 - percent)) / 100);
+
+  async function save(clear = false) {
+    setSaving(true);
+    const until = clear || hours === null ? null : new Date(Date.now() + hours * 3600_000).toISOString();
+    const { error } = await supabase.rpc("vendor_set_promo" as any, {
+      _product_id: product.id,
+      _percent: clear ? 0 : percent,
+      _until: until,
+    } as any);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(clear ? "Promotion retirée" : "Promotion activée 🎉");
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+      <div className="w-full max-w-md rounded-t-3xl bg-white p-4 sm:rounded-3xl">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-black">Promotion · {product.title}</h3>
+          <button onClick={onClose}><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 text-[11px] font-bold uppercase text-muted-foreground">Remise</div>
+            <div className="flex flex-wrap gap-1.5">
+              {[5, 10, 15, 20, 30, 40, 50, 70].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setPercent(v)}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                    percent === v ? "border-mada-red bg-mada-red text-primary-foreground" : "border-border"
+                  }`}
+                >
+                  -{v}%
+                </button>
+              ))}
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={90}
+              value={percent}
+              onChange={(e) => setPercent(Number(e.target.value))}
+              className="mt-2 w-full accent-mada-red"
+            />
+          </div>
+
+          <div>
+            <div className="mb-1 text-[11px] font-bold uppercase text-muted-foreground">Durée</div>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { l: "Illimitée", v: null },
+                { l: "6 h ⚡", v: 6 },
+                { l: "24 h ⚡", v: 24 },
+                { l: "3 jours", v: 72 },
+                { l: "7 jours", v: 168 },
+              ].map((o) => (
+                <button
+                  key={o.l}
+                  onClick={() => setHours(o.v)}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                    hours === o.v ? "border-mada-green bg-mada-green text-secondary-foreground" : "border-border"
+                  }`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+            {percent >= 20 && hours !== null && (
+              <div className="mt-1 text-[10px] font-bold text-mada-red">⚡ Apparaîtra dans la rubrique Flash</div>
+            )}
+          </div>
+
+          <div className="rounded-xl bg-muted p-3 text-sm">
+            <span className="text-muted-foreground line-through">{formatMGA(product.price_mga)}</span>{" "}
+            <span className="font-black text-mada-red">{formatMGA(newPrice)}</span>
+          </div>
+
+          <div className="flex gap-2">
+            {current > 0 && (
+              <button
+                onClick={() => save(true)}
+                disabled={saving}
+                className="rounded-xl border border-destructive px-3 py-2 text-xs font-bold text-destructive disabled:opacity-50"
+              >
+                Retirer
+              </button>
+            )}
+            <button
+              onClick={() => save(false)}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-mada-red py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50"
+            >
+              {saving ? "..." : "Activer la promo"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

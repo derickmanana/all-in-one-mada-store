@@ -40,11 +40,25 @@ const STATUS_COLORS: Record<string, string> = {
 };
 const TRACK_LABEL: Record<string, string> = {
   prepare: "📦 Préparé",
-  shipped: "🚚 Expédié",
-  in_transit: "🛣️ En transit",
+  prepared: "📦 Colis préparé",
+  shipped: "🚚 Départ",
+  in_transit: "🛣️ En route",
+  nearby: "📍 À proximité",
+  at_depot: "🏢 En dépôt",
   arrived: "📍 Arrivé",
-  delivered: "✅ Livré",
+  delivered: "🏠 Livré",
+  cancelled: "❌ Annulé",
 };
+const VENDOR_STEPS: { id: string; label: string }[] = [
+  { id: "prepared", label: "📦 Préparé" },
+  { id: "shipped", label: "🚚 Départ" },
+  { id: "in_transit", label: "🛣️ En route" },
+  { id: "nearby", label: "📍 À proximité" },
+  { id: "at_depot", label: "🏢 En dépôt" },
+  { id: "delivered", label: "🏠 Livré" },
+  { id: "cancelled", label: "❌ Annuler" },
+];
+
 
 export function OrdersList({ userId, role }: { userId: string; role: "client" | "vendeur" }) {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -81,7 +95,16 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, role]);
 
+  async function setTracking(id: string, status: string) {
+    if (status === "cancelled" && !confirm("Annuler la livraison de cette commande ?")) return;
+    const { error } = await supabase.rpc("vendor_set_tracking" as any, { _order_id: id, _status: status } as any);
+    if (error) return toast.error(error.message);
+    toast.success("Statut mis à jour");
+    load();
+  }
+
   async function markInTransit(id: string) {
+
     const { error } = await supabase.rpc("vendor_mark_in_transit" as any, { _order_id: id });
     if (error) return toast.error(error.message);
     toast.success("En cours de livraison 🛣️");
@@ -128,19 +151,32 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             </div>
 
             {/* Vendor actions */}
-            {role === "vendeur" && o.status === "paye" && (
+            {role === "vendeur" && o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
               <button onClick={() => setShipOrder(o)} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                🚚 Expédiée
+                🚚 Expédier
               </button>
             )}
-            {role === "vendeur" && o.status === "expedie" && o.tracking_status !== "in_transit" && (
-              <button onClick={() => markInTransit(o.id)} className="mt-2 rounded-lg bg-mada-red px-3 py-1 text-xs font-bold text-primary-foreground">
-                Aller Livrée →
-              </button>
+            {role === "vendeur" && (
+              <div className="mt-2 space-y-1">
+                <div className="text-[10px] font-bold uppercase text-muted-foreground">Statut du colis</div>
+                <div className="flex flex-wrap gap-1">
+                  {VENDOR_STEPS.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setTracking(o.id, s.id)}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors ${
+                        o.tracking_status === s.id
+                          ? "border-mada-red bg-mada-red text-primary-foreground"
+                          : "border-border bg-white hover:border-mada-red"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-            {role === "vendeur" && o.tracking_status === "in_transit" && (
-              <div className="mt-1 text-[10px] font-bold text-mada-red">En cours de livraison…</div>
-            )}
+
 
             {/* Tracking link for both */}
             {(o.status === "expedie" || o.status === "livre" || o.tracking_status === "in_transit") && (
