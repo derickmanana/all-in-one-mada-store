@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA, formatUSDT } from "./Money";
-import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save } from "lucide-react";
+import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent } from "lucide-react";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGES = 10;
