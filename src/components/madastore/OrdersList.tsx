@@ -95,7 +95,16 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, role]);
 
+  async function setTracking(id: string, status: string) {
+    if (status === "cancelled" && !confirm("Annuler la livraison de cette commande ?")) return;
+    const { error } = await supabase.rpc("vendor_set_tracking" as any, { _order_id: id, _status: status } as any);
+    if (error) return toast.error(error.message);
+    toast.success("Statut mis à jour");
+    load();
+  }
+
   async function markInTransit(id: string) {
+
     const { error } = await supabase.rpc("vendor_mark_in_transit" as any, { _order_id: id });
     if (error) return toast.error(error.message);
     toast.success("En cours de livraison 🛣️");
