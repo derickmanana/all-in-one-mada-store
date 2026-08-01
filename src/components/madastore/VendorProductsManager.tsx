@@ -128,6 +128,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [saving, setSaving] = useState(false);
   const [engagement, setEngagement] = useState<Record<string, { likes: number; comments: number }>>({});
   const [editing, setEditing] = useState<Product | null>(null);
+  const [search, setSearch] = useState("");
+  const [promoFor, setPromoFor] = useState<Product | null>(null);
+
 
   const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
   const descErr = useMemo(() => (desc ? validateDesc(desc) : null), [desc]);
