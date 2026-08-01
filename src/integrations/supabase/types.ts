@@ -173,6 +173,45 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          category_id: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          percent: number
+          product_id: string | null
+          reason: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          percent?: number
+          product_id?: string | null
+          reason?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          percent?: number
+          product_id?: string | null
+          reason?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       deposits: {
         Row: {
           admin_note: string | null
@@ -473,11 +512,14 @@ export type Database = {
           click_count: number
           created_at: string
           description: string | null
+          discount_percent: number
           id: string
           images: string[]
           is_active: boolean
           price_mga: number
           price_usdt: number | null
+          promo_until: string | null
+          sold_count: number
           stock: number
           title: string
           unit: string
@@ -492,11 +534,14 @@ export type Database = {
           click_count?: number
           created_at?: string
           description?: string | null
+          discount_percent?: number
           id?: string
           images?: string[]
           is_active?: boolean
           price_mga: number
           price_usdt?: number | null
+          promo_until?: string | null
+          sold_count?: number
           stock?: number
           title: string
           unit?: string
@@ -511,11 +556,14 @@ export type Database = {
           click_count?: number
           created_at?: string
           description?: string | null
+          discount_percent?: number
           id?: string
           images?: string[]
           is_active?: boolean
           price_mga?: number
           price_usdt?: number | null
+          promo_until?: string | null
+          sold_count?: number
           stock?: number
           title?: string
           unit?: string
@@ -596,6 +644,42 @@ export type Database = {
           status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          dwell_ms: number
+          event_type: string
+          id: string
+          price_mga: number | null
+          product_id: string | null
+          query: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          dwell_ms?: number
+          event_type: string
+          id?: string
+          price_mga?: number | null
+          product_id?: string | null
+          query?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          dwell_ms?: number
+          event_type?: string
+          id?: string
+          price_mga?: number | null
+          product_id?: string | null
+          query?: string | null
           user_id?: string
         }
         Relationships: []
@@ -827,6 +911,33 @@ export type Database = {
         Returns: Json
       }
       confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
+      feed_products: {
+        Args: {
+          _category?: string
+          _limit?: number
+          _max_price?: number
+          _min_price?: number
+          _offset?: number
+          _q?: string
+          _tab?: string
+        }
+        Returns: {
+          category_id: string
+          click_count: number
+          created_at: string
+          discount_percent: number
+          final_price_mga: number
+          id: string
+          images: string[]
+          price_mga: number
+          promo_until: string
+          score: number
+          sold_count: number
+          title: string
+          view_count: number
+        }[]
+      }
+      grant_loyalty_coupons: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -873,8 +984,32 @@ export type Database = {
         }
         Returns: string
       }
+      track_event: {
+        Args: {
+          _dwell_ms?: number
+          _event_type: string
+          _product_id?: string
+          _query?: string
+        }
+        Returns: undefined
+      }
       vendor_mark_in_transit: {
         Args: { _order_id: string }
+        Returns: undefined
+      }
+      vendor_set_promo: {
+        Args: { _percent: number; _product_id: string; _until?: string }
+        Returns: undefined
+      }
+      vendor_set_tracking: {
+        Args: {
+          _courier?: string
+          _depart_at?: string
+          _depart_city?: string
+          _eta_at?: string
+          _order_id: string
+          _status: string
+        }
         Returns: undefined
       }
       vendor_ship_order: {
@@ -902,6 +1037,10 @@ export type Database = {
           _order_id: string
         }
         Returns: undefined
+      }
+      vendor_zone_fee: {
+        Args: { _address_id: string; _vendor_id: string }
+        Returns: Json
       }
     }
     Enums: {
