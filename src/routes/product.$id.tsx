@@ -220,9 +220,18 @@ function ProductPage() {
         <div>
           <div className="flex items-baseline gap-2">
             <div className="text-3xl font-black text-mada-red">{formatMGA(displayPrice)}</div>
+            {promoPct > 0 && (
+              <>
+                <span className="text-sm text-muted-foreground line-through">{formatMGA(basePrice)}</span>
+                <span className="rounded-full bg-mada-red px-2 py-0.5 text-[10px] font-black text-primary-foreground">
+                  -{promoPct}%
+                </span>
+              </>
+            )}
             <div className="inline-block rounded-full bg-mada-green/10 px-2 py-0.5 text-[10px] font-bold text-mada-green">
               -2% dès 10
             </div>
+
           </div>
           <div className="text-sm text-muted-foreground">≈ {formatUSDT(displayPrice)}</div>
           <h2 className="mt-2 text-lg font-bold">{p.title}</h2>
