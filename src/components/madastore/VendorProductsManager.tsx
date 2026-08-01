@@ -338,11 +338,26 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
         </div>
       )}
 
+      {products.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher dans mes produits..."
+            className="w-full rounded-full border-2 border-border bg-white pl-10 pr-3 py-2 text-sm outline-none focus:border-mada-red"
+          />
+        </div>
+      )}
+
       {products.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Aucun produit.</div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {products.map((p) => {
+          {products
+            .filter((p) => !search.trim() || p.title.toLowerCase().includes(search.trim().toLowerCase()))
+            .map((p) => {
+
             const eng = engagement[p.id] ?? { likes: 0, comments: 0 };
             return (
               <div key={p.id} className={`overflow-hidden rounded-2xl border border-border bg-card ${!p.is_active && "opacity-60"}`}>
