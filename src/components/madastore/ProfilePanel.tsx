@@ -4,7 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { AddressesPanel } from "./AddressesPanel";
 import { SupportChat } from "./SupportChat";
 import { TicketsPanel } from "./TicketsPanel";
-import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 
 type View = "home" | "addresses" | "ai" | "support";
@@ -12,6 +13,7 @@ type View = "home" | "addresses" | "ai" | "support";
 export function ProfilePanel({ userId }: { userId: string }) {
   const [view, setView] = useState<View>("home");
   const { user } = useAuth();
+  const { mode, setTheme } = useTheme();
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
