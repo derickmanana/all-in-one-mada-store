@@ -345,7 +345,7 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher dans mes produits..."
-            className="w-full rounded-full border-2 border-border bg-white pl-10 pr-3 py-2 text-sm outline-none focus:border-mada-red"
+            className="w-full rounded-full border-2 border-border bg-card pl-10 pr-3 py-2 text-sm outline-none focus:border-mada-red"
           />
         </div>
       )}
@@ -634,7 +634,7 @@ function PromoModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-md rounded-t-3xl bg-white p-4 sm:rounded-3xl">
+      <div className="w-full max-w-md rounded-t-3xl bg-card p-4 sm:rounded-3xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-black">Promotion · {product.title}</h3>
           <button onClick={onClose}><X className="h-5 w-5" /></button>

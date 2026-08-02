@@ -85,26 +85,35 @@
 }
 
 .dark {
-  --background: oklch(0.14 0.02 260);
-  --foreground: oklch(0.98 0.005 90);
-  --card: oklch(0.18 0.02 260);
-  --card-foreground: oklch(0.98 0.005 90);
-  --popover: oklch(0.18 0.02 260);
-  --popover-foreground: oklch(0.98 0.005 90);
+  /* Thème sombre premium (type TikTok Shop / Temu Dark) */
+  --background: oklch(0.17 0.008 265);   /* ~#0F1115 */
+  --foreground: oklch(0.98 0 0);         /* blanc pur pour les titres */
+  --card: oklch(0.22 0.008 265);         /* cartes légèrement plus claires */
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.21 0.008 265);
+  --popover-foreground: oklch(0.98 0 0);
   --primary: var(--mada-red);
   --primary-foreground: oklch(1 0 0);
   --secondary: var(--mada-green);
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.22 0.02 260);
-  --muted-foreground: oklch(0.7 0.02 260);
-  --accent: oklch(0.25 0.04 152);
-  --accent-foreground: oklch(0.98 0.005 90);
+  --muted: oklch(0.25 0.008 265);
+  --muted-foreground: oklch(0.76 0.006 265); /* gris clair lisible */
+  --accent: oklch(0.27 0.02 152);
+  --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.65 0.24 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 8%);           /* séparations discrètes */
+  --input: oklch(1 0 0 / 12%);
   --ring: var(--mada-red);
+  --mada-red: oklch(0.68 0.22 27);       /* rouge légèrement plus lumineux sur fond noir */
+
+  --gradient-hero: radial-gradient(ellipse at top left, color-mix(in oklab, var(--mada-red) 18%, transparent), transparent 60%),
+                   radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--mada-green) 15%, transparent), transparent 60%),
+                   linear-gradient(180deg, oklch(0.17 0.008 265), oklch(0.15 0.008 265));
+  --shadow-glow-red: 0 10px 30px -18px color-mix(in oklab, var(--mada-red) 55%, transparent);
+  --shadow-glow-green: 0 10px 30px -18px color-mix(in oklab, var(--mada-green) 55%, transparent);
 }
+
 
 @layer base {
   * { border-color: var(--color-border); }

@@ -96,7 +96,7 @@ function CartPage() {
           const discounted = it.qty >= 10;
           const unit = lineUnitWithDiscount(it);
           return (
-            <div key={idx} className="flex gap-3 rounded-2xl border border-border bg-white p-3">
+            <div key={idx} className="flex gap-3 rounded-2xl border border-border bg-card p-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
                 {it.image ? <img src={it.image} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-2xl">📦</div>}
               </div>
@@ -141,7 +141,7 @@ function CartPage() {
       </div>
 
       {items.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white px-4 py-3 shadow-2xl">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card px-4 py-3 shadow-2xl">
           <div className="mx-auto max-w-2xl space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Sous-total</span><span>{formatMGA(subtotal)}</span>

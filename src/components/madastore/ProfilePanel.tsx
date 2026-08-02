@@ -4,7 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { AddressesPanel } from "./AddressesPanel";
 import { SupportChat } from "./SupportChat";
 import { TicketsPanel } from "./TicketsPanel";
-import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 
 type View = "home" | "addresses" | "ai" | "support";
@@ -12,6 +13,7 @@ type View = "home" | "addresses" | "ai" | "support";
 export function ProfilePanel({ userId }: { userId: string }) {
   const [view, setView] = useState<View>("home");
   const { user } = useAuth();
+  const { mode, setTheme } = useTheme();
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
@@ -52,6 +54,33 @@ export function ProfilePanel({ userId }: { userId: string }) {
         <ProfileRow icon={<Sparkles className="h-5 w-5 text-mada-green" />} label="IA Assistant" onClick={() => setView("ai")} />
         <ProfileRow icon={<LifeBuoy className="h-5 w-5 text-mada-red" />} label="Centre d'aide / Support" onClick={() => setView("support")} />
       </div>
+
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 text-sm font-bold">
+          <Moon className="h-5 w-5 text-mada-green" /> Apparence
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {([
+            { id: "dark", label: "Sombre", icon: <Moon className="h-4 w-4" /> },
+            { id: "light", label: "Clair", icon: <Sun className="h-4 w-4" /> },
+            { id: "system", label: "Système", icon: <Monitor className="h-4 w-4" /> },
+          ] as const).map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setTheme(o.id)}
+              className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-semibold transition-colors ${
+                mode === o.id
+                  ? "border-mada-red bg-mada-red/10 text-mada-red"
+                  : "border-border bg-muted/40 text-muted-foreground"
+              }`}
+            >
+              {o.icon} {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+
 
       <button
         onClick={logout}
