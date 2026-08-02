@@ -33,7 +33,7 @@ function AdminPage() {
         <p className="text-xs opacity-90">Contrôle total de la plateforme ALL IN ONE MADA STORE</p>
       </div>
       <TabNav tabs={TABS} active={tab} onChange={setTab} />
-      <div className="mt-2 pb-20 md:pb-0">
+      <div className="mt-2 pb-2">
         {tab === "stats" && <Stats />}
         {tab === "vendors" && <VendorsManager />}
         {tab === "deposits" && <DepositsManager />}

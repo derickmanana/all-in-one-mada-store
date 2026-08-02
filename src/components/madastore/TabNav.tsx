@@ -16,21 +16,22 @@ export function TabNav({
   onChange: (id: string) => void;
 }) {
   return (
-    <nav className="sticky bottom-0 z-20 -mx-6 mt-8 border-t border-border bg-card/95 backdrop-blur md:static md:mx-0 md:mt-0 md:mb-6 md:rounded-2xl md:border md:bg-card">
-      <div className="flex justify-around md:justify-start md:gap-2 md:p-2">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="mx-auto flex max-w-7xl justify-around">
         {tabs.map((t) => {
           const isActive = t.id === active;
           return (
             <button
               key={t.id}
               onClick={() => onChange(t.id)}
-              className={`flex flex-1 flex-col items-center gap-1 px-3 py-3 text-[11px] font-bold transition-colors md:flex-none md:flex-row md:gap-2 md:rounded-xl md:px-4 md:py-2 md:text-sm ${
-                isActive
-                  ? "text-mada-red md:bg-mada-red md:text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${
+                isActive ? "text-mada-red" : "text-muted-foreground"
               }`}
             >
-              <span className="text-lg md:text-base">{t.icon}</span>
+              <span className="[&_svg]:h-5 [&_svg]:w-5">{t.icon}</span>
               <span>{t.label}</span>
             </button>
           );
