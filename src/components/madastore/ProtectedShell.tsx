@@ -65,7 +65,7 @@ export function ProtectedShell({ expectedRole, title, children }: Props) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-28">{children}</main>
     </div>
   );
 }

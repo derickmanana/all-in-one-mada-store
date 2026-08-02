@@ -61,7 +61,7 @@ function VendeurPage() {
         </div>
       )}
       <TabNav tabs={TABS} active={tab} onChange={setTab} />
-      <div className="mt-2 pb-20 md:pb-0">
+      <div className="mt-2 pb-2">
         {user && tab === "produits" && <VendorProductsManager vendorId={user.id} vendorActive={status === "actif"} />}
         {user && tab === "commandes" && <OrdersList userId={user.id} role="vendeur" />}
         {user && tab === "wallet" && <VendorWalletPanel userId={user.id} />}
