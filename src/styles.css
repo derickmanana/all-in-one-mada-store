@@ -114,8 +114,6 @@
   --shadow-glow-green: 0 10px 30px -18px color-mix(in oklab, var(--mada-green) 55%, transparent);
 }
 
-.dark img { }
-
 
 @layer base {
   * { border-color: var(--color-border); }
