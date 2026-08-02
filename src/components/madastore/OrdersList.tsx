@@ -167,7 +167,7 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
                       className={`rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors ${
                         o.tracking_status === s.id
                           ? "border-mada-red bg-mada-red text-primary-foreground"
-                          : "border-border bg-white hover:border-mada-red"
+                          : "border-border bg-card hover:border-mada-red"
                       }`}
                     >
                       {s.label}

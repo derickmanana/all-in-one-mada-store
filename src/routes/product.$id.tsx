@@ -192,7 +192,7 @@ function ProductPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white/95 backdrop-blur px-4 py-3">
+      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur px-4 py-3">
         <Link to={dashboardPathForRole(role)} className="rounded-lg p-1 hover:bg-muted"><ArrowLeft className="h-5 w-5" /></Link>
         <h1 className="text-sm font-black truncate flex-1">{p.title}</h1>
         <Link to="/cart" className="rounded-lg p-1 hover:bg-muted"><ShoppingCart className="h-5 w-5" /></Link>
@@ -241,19 +241,19 @@ function ProductPage() {
 
         {/* Reactions row */}
         <div className="flex items-center gap-3">
-          <button onClick={toggleLike} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${liked ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border bg-white"}`}>
+          <button onClick={toggleLike} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${liked ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border bg-card"}`}>
             <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} /> 👍 {likes}
           </button>
-          <button onClick={toggleLike} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${liked ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border bg-white"}`}>
+          <button onClick={toggleLike} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${liked ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border bg-card"}`}>
             ❤️ Love
           </button>
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold">
             <MessageCircle className="h-4 w-4" /> {comments.length}
           </div>
         </div>
 
         {vendor && (
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-white p-3">
+          <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
             <div>
               <div className="text-[10px] font-bold uppercase text-muted-foreground">Vendeur</div>
               <div className="font-bold text-sm">{vendor.shop_name}</div>
@@ -261,7 +261,7 @@ function ProductPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-border bg-white p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <h3 className="text-sm font-black">💬 Commentaires</h3>
           {user && (
             <div className="flex gap-2">
@@ -292,7 +292,7 @@ function ProductPage() {
 
       {/* Bottom fixed action bar */}
       {role === "client" && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white px-3 py-2 shadow-2xl">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card px-3 py-2 shadow-2xl">
           <div className="mx-auto flex max-w-3xl items-center gap-2">
             <button onClick={contactSeller} className="flex flex-1 flex-col items-center justify-center rounded-xl border border-border py-2 text-[10px] font-bold">
               <MessageCircle className="h-5 w-5 text-mada-green" />
@@ -312,7 +312,7 @@ function ProductPage() {
       {/* Variant popup */}
       {popup && (
         <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/50" onClick={() => setPopup(null)}>
-          <div className="w-full max-w-lg rounded-t-3xl bg-white p-5 space-y-4 animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-t-3xl bg-card p-5 space-y-4 animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
                 {p.images?.[imgIdx] && <img src={p.images[imgIdx]} alt="" className="h-full w-full object-cover" />}
