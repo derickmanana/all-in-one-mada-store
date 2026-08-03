@@ -5,7 +5,22 @@ import { Crosshair, MapPin, Loader2, Save, Plus, X } from "lucide-react";
 import { inMadagascar, loadGoogleMaps, parseAddressComponents } from "@/lib/maps";
 import { formatMGA } from "./Money";
 
-type Zone = { label: string; fee_mga: number };
+type ZoneKind = "province" | "region" | "city";
+type Zone = { kind: ZoneKind; label: string; fee_mga: number };
+const ZONE_KINDS: { id: ZoneKind; label: string }[] = [
+  { id: "province", label: "Province" },
+  { id: "region", label: "Région" },
+  { id: "city", label: "Zone / Ville" },
+];
+function parseZone(z: any): Zone {
+  const kind: ZoneKind = z?.province ? "province" : z?.region ? "region" : "city";
+  return {
+    kind,
+    label: String(z?.province ?? z?.region ?? z?.city ?? z?.label ?? ""),
+    fee_mga: Number(z?.fee_mga ?? 0),
+  };
+}
+
 type Pickup = {
   pickup_province: string | null;
   pickup_region: string | null;
