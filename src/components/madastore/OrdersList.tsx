@@ -74,13 +74,15 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [shipOrder, setShipOrder] = useState<Order | null>(null);
+  const [editOrder, setEditOrder] = useState<Order | null>(null);
 
   async function load() {
     setLoading(true);
     const col = role === "client" ? "client_id" : "vendor_id";
     let req = supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden" as any)
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden, delivery_fee_mga, delivery_days_min, delivery_days_max, depart_at, depart_city, courier_name, coop_name, shipping_mode" as any)
+
       .eq(col, userId)
       .order("created_at", { ascending: false });
     if (role === "client") req = req.eq("client_hidden", false);
