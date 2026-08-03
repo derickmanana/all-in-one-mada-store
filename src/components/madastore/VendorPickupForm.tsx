@@ -56,7 +56,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
           setP({
             ...DEFAULT,
             ...d,
-            shipping_zones: Array.isArray(d.shipping_zones) ? d.shipping_zones : [],
+            shipping_zones: Array.isArray(d.shipping_zones) ? d.shipping_zones.map(parseZone) : [],
           });
         }
       });
