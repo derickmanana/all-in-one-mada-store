@@ -135,7 +135,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
   }
 
   function addZone() {
-    setP((x) => ({ ...x, shipping_zones: [...x.shipping_zones, { label: "", fee_mga: 0 }] }));
+    setP((x) => ({ ...x, shipping_zones: [...x.shipping_zones, { kind: "province" as ZoneKind, label: "", fee_mga: 0 }] }));
   }
   function updateZone(i: number, patch: Partial<Zone>) {
     setP((x) => ({ ...x, shipping_zones: x.shipping_zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)) }));
@@ -149,7 +149,8 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
     if (p.shipping_base_mga < 0) return toast.error("Frais de base invalide");
     const cleanedZones = p.shipping_zones
       .filter((z) => z.label.trim() && z.fee_mga >= 0)
-      .map((z) => ({ label: z.label.trim(), fee_mga: Math.round(z.fee_mga) }));
+      .map((z) => ({ [z.kind]: z.label.trim(), label: z.label.trim(), fee_mga: Math.round(z.fee_mga) }));
+
     setSaving(true);
     const payload: any = { ...p, shipping_zones: cleanedZones };
     // keep legacy column at 0 to disable km-based auto calc
