@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA } from "./Money";
 import { ShippingModal } from "./ShippingModal";
+import { DeliveryEditModal } from "./DeliveryEditModal";
 
 type Order = {
   id: string;
@@ -20,7 +21,16 @@ type Order = {
   shipping_address?: string | null;
   tracking_code?: string | null;
   client_hidden?: boolean;
+  delivery_fee_mga?: number | null;
+  delivery_days_min?: number | null;
+  delivery_days_max?: number | null;
+  depart_at?: string | null;
+  depart_city?: string | null;
+  courier_name?: string | null;
+  coop_name?: string | null;
+  shipping_mode?: string | null;
 };
+
 
 const STATUS_LABELS: Record<string, string> = {
   en_attente: "En attente",
