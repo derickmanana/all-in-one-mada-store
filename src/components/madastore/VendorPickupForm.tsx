@@ -5,7 +5,22 @@ import { Crosshair, MapPin, Loader2, Save, Plus, X } from "lucide-react";
 import { inMadagascar, loadGoogleMaps, parseAddressComponents } from "@/lib/maps";
 import { formatMGA } from "./Money";
 
-type Zone = { label: string; fee_mga: number };
+type ZoneKind = "province" | "region" | "city";
+type Zone = { kind: ZoneKind; label: string; fee_mga: number };
+const ZONE_KINDS: { id: ZoneKind; label: string }[] = [
+  { id: "province", label: "Province" },
+  { id: "region", label: "Région" },
+  { id: "city", label: "Zone / Ville" },
+];
+function parseZone(z: any): Zone {
+  const kind: ZoneKind = z?.province ? "province" : z?.region ? "region" : "city";
+  return {
+    kind,
+    label: String(z?.province ?? z?.region ?? z?.city ?? z?.label ?? ""),
+    fee_mga: Number(z?.fee_mga ?? 0),
+  };
+}
+
 type Pickup = {
   pickup_province: string | null;
   pickup_region: string | null;
@@ -41,7 +56,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
           setP({
             ...DEFAULT,
             ...d,
-            shipping_zones: Array.isArray(d.shipping_zones) ? d.shipping_zones : [],
+            shipping_zones: Array.isArray(d.shipping_zones) ? d.shipping_zones.map(parseZone) : [],
           });
         }
       });
@@ -120,7 +135,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
   }
 
   function addZone() {
-    setP((x) => ({ ...x, shipping_zones: [...x.shipping_zones, { label: "", fee_mga: 0 }] }));
+    setP((x) => ({ ...x, shipping_zones: [...x.shipping_zones, { kind: "province" as ZoneKind, label: "", fee_mga: 0 }] }));
   }
   function updateZone(i: number, patch: Partial<Zone>) {
     setP((x) => ({ ...x, shipping_zones: x.shipping_zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)) }));
@@ -134,7 +149,8 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
     if (p.shipping_base_mga < 0) return toast.error("Frais de base invalide");
     const cleanedZones = p.shipping_zones
       .filter((z) => z.label.trim() && z.fee_mga >= 0)
-      .map((z) => ({ label: z.label.trim(), fee_mga: Math.round(z.fee_mga) }));
+      .map((z) => ({ [z.kind]: z.label.trim(), label: z.label.trim(), fee_mga: Math.round(z.fee_mga) }));
+
     setSaving(true);
     const payload: any = { ...p, shipping_zones: cleanedZones };
     // keep legacy column at 0 to disable km-based auto calc
@@ -180,20 +196,29 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
 
         <div className="rounded-xl border border-dashed border-border p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold uppercase">Zones tarifaires (optionnel)</div>
+            <div className="text-[11px] font-bold uppercase">Tarifs par Province / Région / Zone</div>
             <button type="button" onClick={addZone} className="inline-flex items-center gap-1 rounded-full bg-mada-green px-2 py-1 text-[10px] font-black text-secondary-foreground">
-              <Plus className="h-3 w-3" /> Zone
+              <Plus className="h-3 w-3" /> Tarif
             </button>
           </div>
           {p.shipping_zones.length === 0 && (
-            <p className="text-[10px] text-muted-foreground">Ex : « Antananarivo — 5 000 MGA », « Autres provinces — 15 000 MGA ». Le client choisira la sienne.</p>
+            <p className="text-[10px] text-muted-foreground">
+              Ex : Province « Antananarivo » — 5 000 MGA. Le tarif est appliqué automatiquement selon l'adresse du client ; votre grille reste invisible pour lui.
+            </p>
           )}
           {p.shipping_zones.map((z, i) => (
             <div key={i} className="flex items-center gap-2">
+              <select
+                value={z.kind}
+                onChange={(e) => updateZone(i, { kind: e.target.value as ZoneKind })}
+                className="w-24 rounded-lg border border-border bg-background px-1 py-1.5 text-xs"
+              >
+                {ZONE_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+              </select>
               <input
                 value={z.label}
                 onChange={(e) => updateZone(i, { label: e.target.value })}
-                placeholder="Nom de la zone"
+                placeholder="Nom exact"
                 className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
               />
               <input
@@ -201,7 +226,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
                 value={z.fee_mga || ""}
                 onChange={(e) => updateZone(i, { fee_mga: Number(e.target.value) })}
                 placeholder="MGA"
-                className="w-28 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
+                className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
               />
               <button type="button" onClick={() => removeZone(i)} className="rounded p-1 text-destructive hover:bg-destructive/10">
                 <X className="h-3 w-3" />
@@ -210,9 +235,10 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
           ))}
           {p.shipping_zones.length > 0 && (
             <div className="pt-1 text-[10px] text-muted-foreground">
-              Aperçu : {p.shipping_zones.map((z) => `${z.label || "?"} = ${formatMGA(z.fee_mga)}`).join(" · ")}
+              Aperçu : {p.shipping_zones.map((z) => `${ZONE_KINDS.find((k) => k.id === z.kind)?.label} ${z.label || "?"} = ${formatMGA(z.fee_mga)}`).join(" · ")}
             </div>
           )}
+
         </div>
       </div>
 

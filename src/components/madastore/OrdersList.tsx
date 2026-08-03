@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA } from "./Money";
 import { ShippingModal } from "./ShippingModal";
+import { DeliveryEditModal } from "./DeliveryEditModal";
 
 type Order = {
   id: string;
@@ -20,7 +21,16 @@ type Order = {
   shipping_address?: string | null;
   tracking_code?: string | null;
   client_hidden?: boolean;
+  delivery_fee_mga?: number | null;
+  delivery_days_min?: number | null;
+  delivery_days_max?: number | null;
+  depart_at?: string | null;
+  depart_city?: string | null;
+  courier_name?: string | null;
+  coop_name?: string | null;
+  shipping_mode?: string | null;
 };
+
 
 const STATUS_LABELS: Record<string, string> = {
   en_attente: "En attente",
@@ -64,13 +74,15 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [shipOrder, setShipOrder] = useState<Order | null>(null);
+  const [editOrder, setEditOrder] = useState<Order | null>(null);
 
   async function load() {
     setLoading(true);
     const col = role === "client" ? "client_id" : "vendor_id";
     let req = supabase
       .from("orders")
-      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden" as any)
+      .select("id, product_title, product_image, quantity, total_mga, status, created_at, vendor_released, buyer_confirmed_at, auto_release_at, tracking_status, shipping_address, tracking_code, client_hidden, delivery_fee_mga, delivery_days_min, delivery_days_max, depart_at, depart_city, courier_name, coop_name, shipping_mode" as any)
+
       .eq(col, userId)
       .order("created_at", { ascending: false });
     if (role === "client") req = req.eq("client_hidden", false);
@@ -151,11 +163,24 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             </div>
 
             {/* Vendor actions */}
-            {role === "vendeur" && o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
-              <button onClick={() => setShipOrder(o)} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                🚚 Expédier
-              </button>
+            {role === "vendeur" && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
+                  <button onClick={() => setShipOrder(o)} className="rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
+                    🚚 Expédier
+                  </button>
+                )}
+                <button onClick={() => setEditOrder(o)} className="rounded-lg border border-border px-3 py-1 text-xs font-bold hover:border-mada-red">
+                  ✏️ Modifier livraison
+                </button>
+                {o.delivery_fee_mga != null && (
+                  <span className="rounded-lg bg-muted px-2 py-1 text-[10px] font-bold text-muted-foreground">
+                    Frais: {formatMGA(Number(o.delivery_fee_mga))}
+                  </span>
+                )}
+              </div>
             )}
+
             {role === "vendeur" && (
               <div className="mt-2 space-y-1">
                 <div className="text-[10px] font-bold uppercase text-muted-foreground">Statut du colis</div>
@@ -222,6 +247,8 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
       ))}
 
       {shipOrder && <ShippingModal order={shipOrder} onClose={() => setShipOrder(null)} onDone={load} />}
+      {editOrder && <DeliveryEditModal order={editOrder} onClose={() => setEditOrder(null)} onDone={load} />}
+
     </div>
   );
 }
