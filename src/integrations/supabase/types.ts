@@ -1025,6 +1025,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      vendor_update_delivery: {
+        Args: {
+          _address?: string
+          _coop?: string
+          _courier?: string
+          _days_max?: number
+          _days_min?: number
+          _depart_at?: string
+          _depart_city?: string
+          _fee?: number
+          _mode?: string
+          _order_id: string
+        }
+        Returns: undefined
+      }
       vendor_update_shipping: {
         Args: {
           _coop?: string
