@@ -196,20 +196,29 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
 
         <div className="rounded-xl border border-dashed border-border p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold uppercase">Zones tarifaires (optionnel)</div>
+            <div className="text-[11px] font-bold uppercase">Tarifs par Province / Région / Zone</div>
             <button type="button" onClick={addZone} className="inline-flex items-center gap-1 rounded-full bg-mada-green px-2 py-1 text-[10px] font-black text-secondary-foreground">
-              <Plus className="h-3 w-3" /> Zone
+              <Plus className="h-3 w-3" /> Tarif
             </button>
           </div>
           {p.shipping_zones.length === 0 && (
-            <p className="text-[10px] text-muted-foreground">Ex : « Antananarivo — 5 000 MGA », « Autres provinces — 15 000 MGA ». Le client choisira la sienne.</p>
+            <p className="text-[10px] text-muted-foreground">
+              Ex : Province « Antananarivo » — 5 000 MGA. Le tarif est appliqué automatiquement selon l'adresse du client ; votre grille reste invisible pour lui.
+            </p>
           )}
           {p.shipping_zones.map((z, i) => (
             <div key={i} className="flex items-center gap-2">
+              <select
+                value={z.kind}
+                onChange={(e) => updateZone(i, { kind: e.target.value as ZoneKind })}
+                className="w-24 rounded-lg border border-border bg-background px-1 py-1.5 text-xs"
+              >
+                {ZONE_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+              </select>
               <input
                 value={z.label}
                 onChange={(e) => updateZone(i, { label: e.target.value })}
-                placeholder="Nom de la zone"
+                placeholder="Nom exact"
                 className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
               />
               <input
@@ -217,7 +226,7 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
                 value={z.fee_mga || ""}
                 onChange={(e) => updateZone(i, { fee_mga: Number(e.target.value) })}
                 placeholder="MGA"
-                className="w-28 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
+                className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
               />
               <button type="button" onClick={() => removeZone(i)} className="rounded p-1 text-destructive hover:bg-destructive/10">
                 <X className="h-3 w-3" />
@@ -226,9 +235,10 @@ export function VendorPickupForm({ vendorId }: { vendorId: string }) {
           ))}
           {p.shipping_zones.length > 0 && (
             <div className="pt-1 text-[10px] text-muted-foreground">
-              Aperçu : {p.shipping_zones.map((z) => `${z.label || "?"} = ${formatMGA(z.fee_mga)}`).join(" · ")}
+              Aperçu : {p.shipping_zones.map((z) => `${ZONE_KINDS.find((k) => k.id === z.kind)?.label} ${z.label || "?"} = ${formatMGA(z.fee_mga)}`).join(" · ")}
             </div>
           )}
+
         </div>
       </div>
 
