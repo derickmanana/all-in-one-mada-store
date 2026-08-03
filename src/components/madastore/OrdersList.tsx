@@ -247,6 +247,8 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
       ))}
 
       {shipOrder && <ShippingModal order={shipOrder} onClose={() => setShipOrder(null)} onDone={load} />}
+      {editOrder && <DeliveryEditModal order={editOrder} onClose={() => setEditOrder(null)} onDone={load} />}
+
     </div>
   );
 }
