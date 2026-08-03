@@ -163,11 +163,24 @@ export function OrdersList({ userId, role }: { userId: string; role: "client" | 
             </div>
 
             {/* Vendor actions */}
-            {role === "vendeur" && o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
-              <button onClick={() => setShipOrder(o)} className="mt-2 rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
-                🚚 Expédier
-              </button>
+            {role === "vendeur" && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {o.status === "paye" && !o.tracking_status?.match(/shipped|in_transit|nearby|at_depot|delivered/) && (
+                  <button onClick={() => setShipOrder(o)} className="rounded-lg bg-mada-green px-3 py-1 text-xs font-bold text-secondary-foreground">
+                    🚚 Expédier
+                  </button>
+                )}
+                <button onClick={() => setEditOrder(o)} className="rounded-lg border border-border px-3 py-1 text-xs font-bold hover:border-mada-red">
+                  ✏️ Modifier livraison
+                </button>
+                {o.delivery_fee_mga != null && (
+                  <span className="rounded-lg bg-muted px-2 py-1 text-[10px] font-bold text-muted-foreground">
+                    Frais: {formatMGA(Number(o.delivery_fee_mga))}
+                  </span>
+                )}
+              </div>
             )}
+
             {role === "vendeur" && (
               <div className="mt-2 space-y-1">
                 <div className="text-[10px] font-bold uppercase text-muted-foreground">Statut du colis</div>
