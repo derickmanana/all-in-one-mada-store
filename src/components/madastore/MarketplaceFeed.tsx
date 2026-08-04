@@ -49,6 +49,7 @@ export function MarketplaceFeed() {
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState("pour_toi");
   const [q, setQ] = useState("");
+  const [qd, setQd] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
