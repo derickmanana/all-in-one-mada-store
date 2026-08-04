@@ -88,17 +88,17 @@ export async function assertSession(): Promise<string> {
 export async function uploadToBucket(bucket: string, path: string, file: File): Promise<string> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
     try {
       logStep(`début upload (essai ${attempt}/${MAX_ATTEMPTS})`, `${path} · ${(file.size / 1024).toFixed(0)} Ko`);
-      const { error } = await supabase.storage.from(bucket).upload(path, file, {
+      const uploadPromise = supabase.storage.from(bucket).upload(path, file, {
         contentType: file.type || "application/octet-stream",
         cacheControl: "3600",
         upsert: false,
-        // @ts-expect-error supabase-js transmet les options fetch
-        signal: controller.signal,
       });
+      const { error } = (await Promise.race([
+        uploadPromise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), UPLOAD_TIMEOUT_MS)),
+      ])) as Awaited<typeof uploadPromise>;
       if (error) throw error;
       const url = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
       logStep("upload réussi · URL récupérée", url);
@@ -107,10 +107,9 @@ export async function uploadToBucket(bucket: string, path: string, file: File): 
       lastErr = e;
       console.error(`[publish] échec upload essai ${attempt}`, e);
       if (attempt < MAX_ATTEMPTS) await new Promise((r) => setTimeout(r, 800 * attempt));
-    } finally {
-      clearTimeout(timer);
     }
   }
+
   throw new Error(humanizeUploadError(lastErr));
 }
 
