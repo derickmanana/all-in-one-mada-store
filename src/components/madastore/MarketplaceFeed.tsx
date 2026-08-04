@@ -49,6 +49,7 @@ export function MarketplaceFeed() {
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState("pour_toi");
   const [q, setQ] = useState("");
+  const [qd, setQd] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -79,6 +80,12 @@ export function MarketplaceFeed() {
     }
   }
 
+  // Recherche débouncée : évite une requête par frappe
+  useEffect(() => {
+    const t = setTimeout(() => setQd(q.trim()), 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
   // Repli : requête directe sur les produits (jamais de page vide si des produits existent)
   const fallbackPage = useCallback(
     async (offset: number): Promise<Product[]> => {
@@ -87,14 +94,15 @@ export function MarketplaceFeed() {
         .select("id,title,price_mga,images,category_id,discount_percent,promo_until,sold_count,view_count,click_count,created_at")
         .eq("is_active", true)
         .gt("stock", 0)
-        .order("created_at", { ascending: false })
+        .order("sold_count", { ascending: false })
+        .order("price_mga", { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
       if (cat) query = query.eq("category_id", cat);
-      if (q.trim()) query = query.ilike("title", `%${q.trim()}%`);
+      if (qd) query = query.ilike("title", `%${qd}%`);
       const { data } = await query;
       return ((data ?? []) as any[]).map(computeFinal);
     },
-    [cat, q],
+    [cat, qd],
   );
 
   const fetchPage = useCallback(
@@ -103,7 +111,7 @@ export function MarketplaceFeed() {
       const { data, error } = await supabase.rpc("feed_products" as any, {
         _tab: tab,
         _category: cat,
-        _q: q.trim() || null,
+        _q: qd || null,
         _min_price: null,
         _max_price: null,
         _limit: PAGE_SIZE,
@@ -116,9 +124,13 @@ export function MarketplaceFeed() {
         list = await fallbackPage(offset);
       }
       setHasMore(list.length === PAGE_SIZE);
-      setProducts((prev) => (replace ? list : [...prev, ...list]));
+      setProducts((prev) => {
+        if (replace) return list;
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...list.filter((p) => !seen.has(p.id))];
+      });
     },
-    [cat, q, tab, fallbackPage],
+    [cat, qd, tab, fallbackPage],
   );
 
   useEffect(() => {
@@ -129,12 +141,10 @@ export function MarketplaceFeed() {
 
   // Enregistre la recherche pour l'IA de recommandation
   useEffect(() => {
-    if (!q.trim()) return;
-    const t = setTimeout(() => {
-      supabase.rpc("track_event" as any, { _event_type: "search", _query: q.trim() } as any).then(() => {});
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [q]);
+    if (!qd) return;
+    supabase.rpc("track_event" as any, { _event_type: "search", _query: qd } as any).then(() => {});
+  }, [qd]);
+
 
   useEffect(() => {
     if (!sentinelRef.current || loading || !hasMore) return;

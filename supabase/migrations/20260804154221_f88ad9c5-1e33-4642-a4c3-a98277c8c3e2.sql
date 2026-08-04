@@ -1,0 +1,1 @@
+DO $$ BEGIN EXECUTE 'GRANT EXECUTE ON FUNCTION public.feed_products(text, uuid, text, bigint, bigint, integer, integer) TO ' || quote_ident(current_user); END $$;
