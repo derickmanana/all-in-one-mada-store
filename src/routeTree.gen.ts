@@ -9,29 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VendeurRouteImport } from './routes/vendeur'
-import { Route as ClientRouteImport } from './routes/client'
-import { Route as CartRouteImport } from './routes/cart'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as ClientRouteImport } from './routes/client'
+import { Route as VendeurRouteImport } from './routes/vendeur'
 import { Route as AuthClientRouteImport } from './routes/auth/client'
+import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
+import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OrderIdTrackingRouteImport } from './routes/order.$id.tracking'
 
-const VendeurRoute = VendeurRouteImport.update({
-  id: '/vendeur',
-  path: '/vendeur',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientRoute = ClientRouteImport.update({
-  id: '/client',
-  path: '/client',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CartRoute = CartRouteImport.update({
-  id: '/cart',
-  path: '/cart',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -39,14 +29,24 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductIdRoute = ProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
+const ClientRoute = ClientRouteImport.update({
+  id: '/client',
+  path: '/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendeurRoute = VendeurRouteImport.update({
+  id: '/vendeur',
+  path: '/vendeur',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthClientRoute = AuthClientRouteImport.update({
+  id: '/auth/client',
+  path: '/auth/client',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthVendeurRoute = AuthVendeurRouteImport.update({
@@ -54,9 +54,9 @@ const AuthVendeurRoute = AuthVendeurRouteImport.update({
   path: '/auth/vendeur',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthClientRoute = AuthClientRouteImport.update({
-  id: '/auth/client',
-  path: '/auth/client',
+const ProductIdRoute = ProductIdRouteImport.update({
+  id: '/product/$id',
+  path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderIdTrackingRoute = OrderIdTrackingRouteImport.update({
@@ -149,25 +149,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vendeur': {
-      id: '/vendeur'
-      path: '/vendeur'
-      fullPath: '/vendeur'
-      preLoaderRoute: typeof VendeurRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client': {
-      id: '/client'
-      path: '/client'
-      fullPath: '/client'
-      preLoaderRoute: typeof ClientRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cart': {
-      id: '/cart'
-      path: '/cart'
-      fullPath: '/cart'
-      preLoaderRoute: typeof CartRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -177,18 +163,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/product/$id': {
-      id: '/product/$id'
-      path: '/product/$id'
-      fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdRouteImport
+    '/client': {
+      id: '/client'
+      path: '/client'
+      fullPath: '/client'
+      preLoaderRoute: typeof ClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendeur': {
+      id: '/vendeur'
+      path: '/vendeur'
+      fullPath: '/vendeur'
+      preLoaderRoute: typeof VendeurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/client': {
+      id: '/auth/client'
+      path: '/auth/client'
+      fullPath: '/auth/client'
+      preLoaderRoute: typeof AuthClientRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/vendeur': {
@@ -198,11 +198,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVendeurRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/client': {
-      id: '/auth/client'
-      path: '/auth/client'
-      fullPath: '/auth/client'
-      preLoaderRoute: typeof AuthClientRouteImport
+    '/product/$id': {
+      id: '/product/$id'
+      path: '/product/$id'
+      fullPath: '/product/$id'
+      preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order/$id/tracking': {
@@ -229,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
