@@ -197,15 +197,18 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
 
     setSaving(true);
     try {
+      logStep("publication démarrée", { images: entries.length, vendorId });
+      await assertSession();
+
       const urls: string[] = [];
       const variants: any[] = [];
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
-        const ext = (e.file.name.split(".").pop() || "jpg").toLowerCase();
+        const file = await compressImage(e.file);
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
         const path = `${vendorId}/${Date.now()}-${i}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const up = await supabase.storage.from("products").upload(path, e.file, { contentType: e.file.type });
-        if (up.error) throw up.error;
-        urls.push(supabase.storage.from("products").getPublicUrl(path).data.publicUrl);
+        toast.loading(`Envoi image ${i + 1}/${entries.length}…`, { id: "pub" });
+        urls.push(await uploadToBucket("products", path, file));
         variants.push({ image_index: i, ...e.variant });
       }
 
@@ -214,15 +217,16 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
         if (video.size > MAX_VIDEO_MB * 1024 * 1024) throw new Error(`Vidéo > ${MAX_VIDEO_MB} Mo`);
         const ext = (video.name.split(".").pop() || "mp4").toLowerCase();
         const vpath = `${vendorId}/video-${Date.now()}.${ext}`;
-        const up = await supabase.storage.from("products").upload(vpath, video, { contentType: video.type });
-        if (up.error) throw up.error;
-        video_url = supabase.storage.from("products").getPublicUrl(vpath).data.publicUrl;
+        toast.loading("Envoi de la vidéo…", { id: "pub" });
+        video_url = await uploadToBucket("products", vpath, video);
       }
 
       const minPrice = Math.min(...variants.map((v) => v.price_mga));
       // Aggregate units across variants for legacy `unit` column (first found or 'unité')
       const firstUnit = variants.flatMap((v: any) => v.units || [])[0] || "unité";
 
+      toast.loading("Enregistrement du produit…", { id: "pub" });
+      logStep("insertion produit", { title, images: urls.length, variants: variants.length });
       const { error } = await supabase.from("products").insert({
         vendor_id: vendorId,
         category_id: category || null,
@@ -234,17 +238,20 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
         variants,
         unit: firstUnit,
       } as any);
-      if (error) throw error;
-      toast.success("Produit publié ✅");
+      if (error) throw new Error(humanizeDbError(error));
+      logStep("publication terminée ✅");
+      toast.success("Produit publié ✅", { id: "pub" });
       setShowForm(false);
       setTitle(""); setDesc(""); setStock("1"); setEntries([]); setVideo(null);
       load();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur");
+      console.error("[publish] échec", e);
+      toast.error(e?.message ?? "Erreur", { id: "pub" });
     } finally {
       setSaving(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Supprimer ce produit ?")) return;
