@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.place_order(uuid, integer, text, uuid, bigint, double precision, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.place_order(uuid, integer, text, uuid, bigint, double precision, integer, integer) TO authenticated, service_role;
