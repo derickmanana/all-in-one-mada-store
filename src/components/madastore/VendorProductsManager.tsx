@@ -500,14 +500,14 @@ function EditProductModal({
 
     setSaving(true);
     try {
+      await assertSession();
       const uploaded: string[] = [];
       for (let i = 0; i < newFiles.length; i++) {
-        const nf = newFiles[i];
-        const ext = (nf.file.name.split(".").pop() || "jpg").toLowerCase();
+        const file = await compressImage(newFiles[i].file);
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
         const path = `${product.id}/edit-${Date.now()}-${i}.${ext}`;
-        const up = await supabase.storage.from("products").upload(path, nf.file, { contentType: nf.file.type });
-        if (up.error) throw up.error;
-        uploaded.push(supabase.storage.from("products").getPublicUrl(path).data.publicUrl);
+        toast.loading(`Envoi image ${i + 1}/${newFiles.length}…`, { id: "edit" });
+        uploaded.push(await uploadToBucket("products", path, file));
       }
       const finalImages = [...images, ...uploaded];
       const finalVariants = variants.slice(0, finalImages.length).map((v, i) => ({ image_index: i, ...v }));
@@ -523,11 +523,13 @@ function EditProductModal({
         images: finalImages,
         variants: finalVariants,
       } as any).eq("id", product.id);
-      if (error) throw error;
-      toast.success("Produit mis à jour ✅");
+      if (error) throw new Error(humanizeDbError(error));
+      toast.success("Produit mis à jour ✅", { id: "edit" });
       onSaved();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur");
+      console.error("[publish] échec édition", e);
+      toast.error(e?.message ?? "Erreur", { id: "edit" });
+
     } finally {
       setSaving(false);
     }
