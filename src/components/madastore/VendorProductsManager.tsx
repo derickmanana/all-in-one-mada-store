@@ -426,6 +426,51 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
             </select>
           </div>
 
+          <div className="rounded-xl border border-border bg-background p-3">
+            <div className="text-xs font-bold">Stockage des images</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => chooseProvider("supabase")}
+                className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${provider === "supabase" ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border text-muted-foreground"}`}
+              >
+                <Cloud className="h-4 w-4" /> Stockage interne
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseProvider("drive")}
+                className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${provider === "drive" ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border text-muted-foreground"}`}
+              >
+                <HardDrive className="h-4 w-4" /> Google Drive
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+              {drive.connected ? (
+                <>
+                  <span className="text-mada-green">✓ Drive connecté{drive.email ? ` · ${drive.email}` : ""}</span>
+                  <button
+                    type="button"
+                    disabled={driveBusy}
+                    onClick={unlinkDrive}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 font-semibold disabled:opacity-50"
+                  >
+                    <Unlink className="h-3 w-3" /> Déconnecter
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  disabled={driveBusy}
+                  onClick={linkDrive}
+                  className="inline-flex items-center gap-1 rounded-md bg-foreground/10 px-2 py-1 font-semibold disabled:opacity-50"
+                >
+                  <Link2 className="h-3 w-3" /> {driveBusy ? "Connexion…" : "Connecter mon Google Drive"}
+                </button>
+              )}
+              <span>Dossier automatique : ALL IN ONE MADA STORE / Produits.</span>
+            </div>
+          </div>
+
           <div>
             <label className="block">
               <span className="text-xs font-bold">Images (max {MAX_IMAGES}, {MAX_IMG_MB} Mo, JPG/PNG/WEBP)</span>
@@ -434,7 +479,16 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
             <div className="mt-1 text-[10px] text-muted-foreground">
               Chaque image devient une variante avec ses propres couleurs, tailles et unités (kg, L, m², W, V, Ah…).
             </div>
+            <button
+              type="button"
+              disabled={aiBusy || entries.length === 0}
+              onClick={analyzeWithAI}
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-mada-green px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+            >
+              <Sparkles className="h-4 w-4" /> {aiBusy ? "Analyse…" : "Analyser avec IA"}
+            </button>
           </div>
+
 
           {entries.length > 0 && (
             <div className="space-y-3">
