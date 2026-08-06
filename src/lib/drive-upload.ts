@@ -105,3 +105,14 @@ export async function uploadProductImage(
   logStep("upload Drive réussi", url);
   return url;
 }
+
+const PROVIDER_KEY = "mada.storage.provider";
+
+export function getStoredProvider(): StorageProvider {
+  if (typeof window === "undefined") return "supabase";
+  return window.localStorage.getItem(PROVIDER_KEY) === "drive" ? "drive" : "supabase";
+}
+
+export function setStoredProvider(p: StorageProvider) {
+  if (typeof window !== "undefined") window.localStorage.setItem(PROVIDER_KEY, p);
+}
