@@ -143,6 +143,112 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [editing, setEditing] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [promoFor, setPromoFor] = useState<Product | null>(null);
+  const [provider, setProvider] = useState<StorageProvider>("supabase");
+  const [drive, setDrive] = useState<{ connected: boolean; email: string | null }>({ connected: false, email: null });
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+
+  useEffect(() => {
+    setProvider(getStoredProvider());
+    driveStatus().then(setDrive).catch(() => {});
+  }, []);
+
+  function chooseProvider(p: StorageProvider) {
+    if (p === "drive" && !drive.connected) {
+      toast.error("Connectez d'abord votre Google Drive.");
+      return;
+    }
+    setProvider(p);
+    setStoredProvider(p);
+  }
+
+  async function linkDrive() {
+    setDriveBusy(true);
+    try {
+      await connectGoogleDrive();
+      const s = await driveStatus();
+      setDrive(s);
+      if (s.connected) {
+        setProvider("drive");
+        setStoredProvider("drive");
+        toast.success("Google Drive connecté ✅");
+      } else {
+        toast.error("Connexion non finalisée.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Connexion Google Drive impossible");
+    } finally {
+      setDriveBusy(false);
+    }
+  }
+
+  async function unlinkDrive() {
+    setDriveBusy(true);
+    try {
+      await unlinkGoogleDrive();
+      setDrive({ connected: false, email: null });
+      setProvider("supabase");
+      setStoredProvider("supabase");
+      toast.success("Google Drive déconnecté");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setDriveBusy(false);
+    }
+  }
+
+  async function analyzeWithAI() {
+    const first = entries[0];
+    if (!first) return toast.error("Ajoutez d'abord une image du produit.");
+    setAiBusy(true);
+    toast.loading("Analyse IA en cours…", { id: "ai" });
+    try {
+      const compressed = await compressImage(first.file);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result ?? "");
+          resolve(s.slice(s.indexOf(",") + 1));
+        };
+        r.onerror = () => reject(new Error("Lecture image impossible"));
+        r.readAsDataURL(compressed);
+      });
+      const { suggestion, error } = await analyzeProductWithAI({
+        data: {
+          imageBase64: base64,
+          mimeType: compressed.type || "image/jpeg",
+          currentTitle: title,
+          categories: cats.map((c) => ({ id: c.id, name: c.name })),
+        },
+      });
+      if (!suggestion) throw new Error(error ?? "Analyse impossible");
+      setTitle(suggestion.title.slice(0, TITLE_MAX));
+      setDesc(suggestion.description.slice(0, DESC_MAX));
+      if (suggestion.category_id) setCategory(suggestion.category_id);
+      setEntries((list) =>
+        list.map((e, i) =>
+          i === 0
+            ? {
+                ...e,
+                variant: {
+                  ...e.variant,
+                  colors: suggestion.colors?.length ? suggestion.colors : e.variant.colors,
+                  sizes: suggestion.sizes?.length ? suggestion.sizes : e.variant.sizes,
+                  units: suggestion.units?.length ? suggestion.units : e.variant.units,
+                },
+              }
+            : e,
+        ),
+      );
+      toast.success("Fiche produit générée par l'IA ✨", { id: "ai" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur IA", { id: "ai" });
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+
 
 
   const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
