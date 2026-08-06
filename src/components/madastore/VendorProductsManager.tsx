@@ -620,13 +620,15 @@ function EditProductModal({
     try {
       await assertSession();
       const uploaded: string[] = [];
+      const editProvider = getStoredProvider();
       for (let i = 0; i < newFiles.length; i++) {
-        const file = await compressImage(newFiles[i].file);
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${product.id}/edit-${Date.now()}-${i}.${ext}`;
-        toast.loading(`Envoi image ${i + 1}/${newFiles.length}…`, { id: "edit" });
-        uploaded.push(await uploadToBucket("products", path, file));
+        toast.loading(
+          `Envoi image ${i + 1}/${newFiles.length} vers ${editProvider === "drive" ? "Google Drive" : "le stockage interne"}…`,
+          { id: "edit" },
+        );
+        uploaded.push(await uploadProductImage(editProvider, newFiles[i].file, product.vendor_id ?? product.id, i));
       }
+
       const finalImages = [...images, ...uploaded];
       const finalVariants = variants.slice(0, finalImages.length).map((v, i) => ({ image_index: i, ...v }));
       const minPrice = Math.min(...finalVariants.map((v: any) => v.price_mga));
