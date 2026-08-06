@@ -2,8 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA, formatUSDT } from "./Money";
-import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent } from "lucide-react";
+import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent, HardDrive, Cloud, Sparkles, Link2, Unlink } from "lucide-react";
 import { assertSession, compressImage, uploadToBucket, humanizeDbError, logStep } from "@/lib/upload";
+import {
+  uploadProductImage,
+  connectGoogleDrive,
+  driveStatus,
+  unlinkGoogleDrive,
+  getStoredProvider,
+  setStoredProvider,
+  type StorageProvider,
+} from "@/lib/drive-upload";
+import { analyzeProductWithAI } from "@/lib/api/product-ai.functions";
+
 
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
