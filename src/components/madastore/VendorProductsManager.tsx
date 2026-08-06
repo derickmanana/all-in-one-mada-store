@@ -2,8 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMGA, formatUSDT } from "./Money";
-import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent } from "lucide-react";
+import { Plus, Trash2, X, Heart, MessageCircle, Video as VideoIcon, Pencil, Save, Search, BadgePercent, HardDrive, Cloud, Sparkles, Link2, Unlink } from "lucide-react";
 import { assertSession, compressImage, uploadToBucket, humanizeDbError, logStep } from "@/lib/upload";
+import {
+  uploadProductImage,
+  connectGoogleDrive,
+  driveStatus,
+  unlinkGoogleDrive,
+  getStoredProvider,
+  setStoredProvider,
+  type StorageProvider,
+} from "@/lib/drive-upload";
+import { analyzeProductWithAI } from "@/lib/api/product-ai.functions";
+
 
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -132,6 +143,112 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
   const [editing, setEditing] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [promoFor, setPromoFor] = useState<Product | null>(null);
+  const [provider, setProvider] = useState<StorageProvider>("supabase");
+  const [drive, setDrive] = useState<{ connected: boolean; email: string | null }>({ connected: false, email: null });
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+
+  useEffect(() => {
+    setProvider(getStoredProvider());
+    driveStatus().then(setDrive).catch(() => {});
+  }, []);
+
+  function chooseProvider(p: StorageProvider) {
+    if (p === "drive" && !drive.connected) {
+      toast.error("Connectez d'abord votre Google Drive.");
+      return;
+    }
+    setProvider(p);
+    setStoredProvider(p);
+  }
+
+  async function linkDrive() {
+    setDriveBusy(true);
+    try {
+      await connectGoogleDrive();
+      const s = await driveStatus();
+      setDrive(s);
+      if (s.connected) {
+        setProvider("drive");
+        setStoredProvider("drive");
+        toast.success("Google Drive connecté ✅");
+      } else {
+        toast.error("Connexion non finalisée.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Connexion Google Drive impossible");
+    } finally {
+      setDriveBusy(false);
+    }
+  }
+
+  async function unlinkDrive() {
+    setDriveBusy(true);
+    try {
+      await unlinkGoogleDrive();
+      setDrive({ connected: false, email: null });
+      setProvider("supabase");
+      setStoredProvider("supabase");
+      toast.success("Google Drive déconnecté");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setDriveBusy(false);
+    }
+  }
+
+  async function analyzeWithAI() {
+    const first = entries[0];
+    if (!first) return toast.error("Ajoutez d'abord une image du produit.");
+    setAiBusy(true);
+    toast.loading("Analyse IA en cours…", { id: "ai" });
+    try {
+      const compressed = await compressImage(first.file);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result ?? "");
+          resolve(s.slice(s.indexOf(",") + 1));
+        };
+        r.onerror = () => reject(new Error("Lecture image impossible"));
+        r.readAsDataURL(compressed);
+      });
+      const { suggestion, error } = await analyzeProductWithAI({
+        data: {
+          imageBase64: base64,
+          mimeType: compressed.type || "image/jpeg",
+          currentTitle: title,
+          categories: cats.map((c) => ({ id: c.id, name: c.name })),
+        },
+      });
+      if (!suggestion) throw new Error(error ?? "Analyse impossible");
+      setTitle(suggestion.title.slice(0, TITLE_MAX));
+      setDesc(suggestion.description.slice(0, DESC_MAX));
+      if (suggestion.category_id) setCategory(suggestion.category_id);
+      setEntries((list) =>
+        list.map((e, i) =>
+          i === 0
+            ? {
+                ...e,
+                variant: {
+                  ...e.variant,
+                  colors: suggestion.colors?.length ? suggestion.colors : e.variant.colors,
+                  sizes: suggestion.sizes?.length ? suggestion.sizes : e.variant.sizes,
+                  units: suggestion.units?.length ? suggestion.units : e.variant.units,
+                },
+              }
+            : e,
+        ),
+      );
+      toast.success("Fiche produit générée par l'IA ✨", { id: "ai" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur IA", { id: "ai" });
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+
 
 
   const titleErr = useMemo(() => (title ? validateTitle(title) : null), [title]);
@@ -206,13 +323,14 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       const variants: any[] = [];
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
-        const file = await compressImage(e.file);
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${vendorId}/${Date.now()}-${i}-${Math.random().toString(36).slice(2)}.${ext}`;
-        toast.loading(`Envoi image ${i + 1}/${entries.length}…`, { id: "pub" });
-        urls.push(await uploadToBucket("products", path, file));
+        toast.loading(
+          `Envoi image ${i + 1}/${entries.length} vers ${provider === "drive" ? "Google Drive" : "le stockage interne"}…`,
+          { id: "pub" },
+        );
+        urls.push(await uploadProductImage(provider, e.file, vendorId, i));
         variants.push({ image_index: i, ...e.variant });
       }
+
 
       let video_url: string | null = null;
       if (video) {
@@ -308,6 +426,51 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
             </select>
           </div>
 
+          <div className="rounded-xl border border-border bg-background p-3">
+            <div className="text-xs font-bold">Stockage des images</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => chooseProvider("supabase")}
+                className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${provider === "supabase" ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border text-muted-foreground"}`}
+              >
+                <Cloud className="h-4 w-4" /> Stockage interne
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseProvider("drive")}
+                className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${provider === "drive" ? "border-mada-red bg-mada-red/10 text-mada-red" : "border-border text-muted-foreground"}`}
+              >
+                <HardDrive className="h-4 w-4" /> Google Drive
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+              {drive.connected ? (
+                <>
+                  <span className="text-mada-green">✓ Drive connecté{drive.email ? ` · ${drive.email}` : ""}</span>
+                  <button
+                    type="button"
+                    disabled={driveBusy}
+                    onClick={unlinkDrive}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 font-semibold disabled:opacity-50"
+                  >
+                    <Unlink className="h-3 w-3" /> Déconnecter
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  disabled={driveBusy}
+                  onClick={linkDrive}
+                  className="inline-flex items-center gap-1 rounded-md bg-foreground/10 px-2 py-1 font-semibold disabled:opacity-50"
+                >
+                  <Link2 className="h-3 w-3" /> {driveBusy ? "Connexion…" : "Connecter mon Google Drive"}
+                </button>
+              )}
+              <span>Dossier automatique : ALL IN ONE MADA STORE / Produits.</span>
+            </div>
+          </div>
+
           <div>
             <label className="block">
               <span className="text-xs font-bold">Images (max {MAX_IMAGES}, {MAX_IMG_MB} Mo, JPG/PNG/WEBP)</span>
@@ -316,7 +479,16 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
             <div className="mt-1 text-[10px] text-muted-foreground">
               Chaque image devient une variante avec ses propres couleurs, tailles et unités (kg, L, m², W, V, Ah…).
             </div>
+            <button
+              type="button"
+              disabled={aiBusy || entries.length === 0}
+              onClick={analyzeWithAI}
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-mada-green px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+            >
+              <Sparkles className="h-4 w-4" /> {aiBusy ? "Analyse…" : "Analyser avec IA"}
+            </button>
           </div>
+
 
           {entries.length > 0 && (
             <div className="space-y-3">
@@ -502,13 +674,15 @@ function EditProductModal({
     try {
       await assertSession();
       const uploaded: string[] = [];
+      const editProvider = getStoredProvider();
       for (let i = 0; i < newFiles.length; i++) {
-        const file = await compressImage(newFiles[i].file);
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${product.id}/edit-${Date.now()}-${i}.${ext}`;
-        toast.loading(`Envoi image ${i + 1}/${newFiles.length}…`, { id: "edit" });
-        uploaded.push(await uploadToBucket("products", path, file));
+        toast.loading(
+          `Envoi image ${i + 1}/${newFiles.length} vers ${editProvider === "drive" ? "Google Drive" : "le stockage interne"}…`,
+          { id: "edit" },
+        );
+        uploaded.push(await uploadProductImage(editProvider, newFiles[i].file, product.id, i));
       }
+
       const finalImages = [...images, ...uploaded];
       const finalVariants = variants.slice(0, finalImages.length).map((v, i) => ({ image_index: i, ...v }));
       const minPrice = Math.min(...finalVariants.map((v: any) => v.price_mga));

@@ -17,6 +17,7 @@ import { Route as VendeurRouteImport } from './routes/vendeur'
 import { Route as AuthClientRouteImport } from './routes/auth/client'
 import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
 import { Route as OrderIdTrackingRouteImport } from './routes/order.$id.tracking'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthGoogleDriveReturnRoute = OauthGoogleDriveReturnRouteImport.update({
+  id: '/oauth/google-drive/return',
+  path: '/oauth/google-drive/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderIdTrackingRoute = OrderIdTrackingRouteImport.update({
   id: '/order/$id/tracking',
   path: '/order/$id/tracking',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
   '/product/$id': typeof ProductIdRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
   '/product/$id': typeof ProductIdRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
   '/product/$id': typeof ProductIdRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/auth/client'
     | '/auth/vendeur'
     | '/product/$id'
+    | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/auth/client'
     | '/auth/vendeur'
     | '/product/$id'
+    | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/auth/client'
     | '/auth/vendeur'
     | '/product/$id'
+    | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   AuthClientRoute: typeof AuthClientRoute
   AuthVendeurRoute: typeof AuthVendeurRoute
   ProductIdRoute: typeof ProductIdRoute
+  OauthGoogleDriveReturnRoute: typeof OauthGoogleDriveReturnRoute
   OrderIdTrackingRoute: typeof OrderIdTrackingRoute
 }
 
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/google-drive/return': {
+      id: '/oauth/google-drive/return'
+      path: '/oauth/google-drive/return'
+      fullPath: '/oauth/google-drive/return'
+      preLoaderRoute: typeof OauthGoogleDriveReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order/$id/tracking': {
       id: '/order/$id/tracking'
       path: '/order/$id/tracking'
@@ -224,18 +244,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthClientRoute: AuthClientRoute,
   AuthVendeurRoute: AuthVendeurRoute,
   ProductIdRoute: ProductIdRoute,
+  OauthGoogleDriveReturnRoute: OauthGoogleDriveReturnRoute,
   OrderIdTrackingRoute: OrderIdTrackingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
