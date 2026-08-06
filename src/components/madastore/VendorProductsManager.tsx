@@ -626,7 +626,7 @@ function EditProductModal({
           `Envoi image ${i + 1}/${newFiles.length} vers ${editProvider === "drive" ? "Google Drive" : "le stockage interne"}…`,
           { id: "edit" },
         );
-        uploaded.push(await uploadProductImage(editProvider, newFiles[i].file, product.vendor_id ?? product.id, i));
+        uploaded.push(await uploadProductImage(editProvider, newFiles[i].file, product.id, i));
       }
 
       const finalImages = [...images, ...uploaded];
