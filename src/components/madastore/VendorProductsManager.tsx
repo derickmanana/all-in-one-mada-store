@@ -323,13 +323,14 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
       const variants: any[] = [];
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
-        const file = await compressImage(e.file);
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${vendorId}/${Date.now()}-${i}-${Math.random().toString(36).slice(2)}.${ext}`;
-        toast.loading(`Envoi image ${i + 1}/${entries.length}…`, { id: "pub" });
-        urls.push(await uploadToBucket("products", path, file));
+        toast.loading(
+          `Envoi image ${i + 1}/${entries.length} vers ${provider === "drive" ? "Google Drive" : "le stockage interne"}…`,
+          { id: "pub" },
+        );
+        urls.push(await uploadProductImage(provider, e.file, vendorId, i));
         variants.push({ image_index: i, ...e.variant });
       }
+
 
       let video_url: string | null = null;
       if (video) {
