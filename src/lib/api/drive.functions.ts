@@ -3,17 +3,6 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GATEWAY_BASE_URL = "https://connector-gateway.lovable.dev";
-const CONNECTOR_ID = "google_drive";
-const ROOT_FOLDER = "ALL IN ONE MADA STORE";
-const SUB_FOLDER = "Produits";
-
-const DRIVE_SCOPES = [
-  "https://www.googleapis.com/auth/userinfo.email",
-  "https://www.googleapis.com/auth/userinfo.profile",
-  "https://www.googleapis.com/auth/drive.file",
-];
-
 /** Démarre la connexion Google Drive du vendeur (popup OAuth). */
 export const startDriveConnect = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -26,16 +15,22 @@ export const startDriveConnect = createServerFn({ method: "POST" })
 
     const { authorizeAppUserOAuth } = await import("@/integrations/lovable/appUserConnector");
     const { getConnectionKeyForUser } = await import("@/server/appUserConnections.server");
-    const existing = await getConnectionKeyForUser(context.userId, CONNECTOR_ID);
+    const existing = await getConnectionKeyForUser(context.userId, "google_drive");
 
     const { authorizationUrl } = await authorizeAppUserOAuth({
-      gatewayBaseUrl: GATEWAY_BASE_URL,
-      connectorId: CONNECTOR_ID,
+      gatewayBaseUrl: "https://connector-gateway.lovable.dev",
+      connectorId: "google_drive",
       appUserId: context.userId,
       clientAPIKey,
       returnUrl,
       connectionAPIKey: existing ?? undefined,
-      credentialsConfiguration: { scopes: DRIVE_SCOPES },
+      credentialsConfiguration: {
+        scopes: [
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/drive.file",
+        ],
+      },
     });
     return { authorizationUrl };
   });
@@ -43,15 +38,15 @@ export const startDriveConnect = createServerFn({ method: "POST" })
 /** Termine la connexion : échange le code à usage unique et stocke la clé chiffrée. */
 export const completeDriveConnect = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ code: z.string().min(1) }).parse(input))
+  .validator((input) => z.object({ code: z.string().min(1) }).parse(input))
   .handler(async ({ data, context }) => {
     const { exchangeAppUserOAuthCode } = await import("@/integrations/lovable/appUserConnector");
     const { saveConnectionKeyForUser } = await import("@/server/appUserConnections.server");
     const { connectionAPIKey, connectorId } = await exchangeAppUserOAuthCode(
-      GATEWAY_BASE_URL,
+      "https://connector-gateway.lovable.dev",
       data.code,
     );
-    if (connectorId !== CONNECTOR_ID) throw new Error("Mauvais connecteur renvoyé par OAuth.");
+    if (connectorId !== "google_drive") throw new Error("Mauvais connecteur renvoyé par OAuth.");
     await saveConnectionKeyForUser(context.userId, connectorId, connectionAPIKey);
     return { ok: true };
   });
@@ -61,14 +56,14 @@ export const getDriveStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { getConnectionKeyForUser } = await import("@/server/appUserConnections.server");
-    const connectionAPIKey = await getConnectionKeyForUser(context.userId, CONNECTOR_ID);
+    const connectionAPIKey = await getConnectionKeyForUser(context.userId, "google_drive");
     if (!connectionAPIKey) return { connected: false, email: null as string | null };
     try {
       const { callAsAppUser } = await import("@/integrations/lovable/appUserConnector");
       const res = await callAsAppUser({
-        gatewayBaseUrl: GATEWAY_BASE_URL,
+        gatewayBaseUrl: "https://connector-gateway.lovable.dev",
         connectionAPIKey,
-        connectorId: CONNECTOR_ID,
+        connectorId: "google_drive",
         path: "/drive/v3/about?fields=user(emailAddress)",
       });
       if (!res.ok) {
@@ -90,36 +85,36 @@ export const disconnectDrive = createServerFn({ method: "POST" })
     const { getConnectionKeyForUser, deleteConnectionForUser } = await import(
       "@/server/appUserConnections.server"
     );
-    const connectionAPIKey = await getConnectionKeyForUser(context.userId, CONNECTOR_ID);
+    const connectionAPIKey = await getConnectionKeyForUser(context.userId, "google_drive");
     if (connectionAPIKey) {
       const { disconnectAppUser } = await import("@/integrations/lovable/appUserConnector");
       try {
         await disconnectAppUser({
-          gatewayBaseUrl: GATEWAY_BASE_URL,
+          gatewayBaseUrl: "https://connector-gateway.lovable.dev",
           connectionAPIKey,
-          connectorId: CONNECTOR_ID,
+          connectorId: "google_drive",
         });
       } catch (e) {
         console.error("drive disconnect gateway error", e);
       }
     }
-    await deleteConnectionForUser(context.userId, CONNECTOR_ID);
+    await deleteConnectionForUser(context.userId, "google_drive");
     return { ok: true };
   });
-
-const UploadInput = z.object({
-  fileBase64: z.string().min(20).max(20_000_000),
-  mimeType: z.string().default("image/jpeg"),
-  fileName: z.string().min(1).max(180).default("produit.jpg"),
-});
 
 /** Upload d'une image produit dans le Drive du vendeur → renvoie une URL image directe. */
 export const uploadImageToDrive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => UploadInput.parse(input))
+  .validator((input) =>
+    z.object({
+      fileBase64: z.string().min(20).max(20_000_000),
+      mimeType: z.string().default("image/jpeg"),
+      fileName: z.string().min(1).max(180).default("produit.jpg"),
+    }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { getConnectionKeyForUser } = await import("@/server/appUserConnections.server");
-    const connectionAPIKey = await getConnectionKeyForUser(context.userId, CONNECTOR_ID);
+    const connectionAPIKey = await getConnectionKeyForUser(context.userId, "google_drive");
     if (!connectionAPIKey) {
       return { url: null as string | null, error: "Google Drive non connecté pour ce compte." };
     }
@@ -127,9 +122,9 @@ export const uploadImageToDrive = createServerFn({ method: "POST" })
 
     const call = (path: string, init?: RequestInit) =>
       callAsAppUser({
-        gatewayBaseUrl: GATEWAY_BASE_URL,
+        gatewayBaseUrl: "https://connector-gateway.lovable.dev",
         connectionAPIKey,
-        connectorId: CONNECTOR_ID,
+        connectorId: "google_drive",
         path,
         init,
       });
@@ -163,8 +158,8 @@ export const uploadImageToDrive = createServerFn({ method: "POST" })
     }
 
     try {
-      const root = await findOrCreateFolder(ROOT_FOLDER);
-      const folder = await findOrCreateFolder(SUB_FOLDER, root);
+      const root = await findOrCreateFolder("ALL IN ONE MADA STORE");
+      const folder = await findOrCreateFolder("Produits", root);
 
       const bytes = Buffer.from(data.fileBase64, "base64");
       const boundary = `mada${Math.random().toString(36).slice(2)}${Date.now()}`;
@@ -188,7 +183,7 @@ export const uploadImageToDrive = createServerFn({ method: "POST" })
       const uj: any = await up.json();
       const fileId: string = uj.id;
 
-      const perm = await call(`/drive/v3/permissions/${fileId}`, {
+      const perm = await call(`/drive/v3/files/${fileId}/permissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "reader", type: "anyone" }),
