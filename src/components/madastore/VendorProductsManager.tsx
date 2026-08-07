@@ -153,9 +153,9 @@ export function VendorProductsManager({ vendorId, vendorActive }: { vendorId: st
     driveStatus().then(setDrive).catch(() => {});
   }, []);
 
-  function chooseProvider(p: StorageProvider) {
+  async function chooseProvider(p: StorageProvider) {
     if (p === "drive" && !drive.connected) {
-      toast.error("Connectez d'abord votre Google Drive.");
+      await linkDrive();
       return;
     }
     setProvider(p);
