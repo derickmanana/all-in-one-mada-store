@@ -4,11 +4,12 @@ import { useAuth } from "@/lib/auth";
 import { AddressesPanel } from "./AddressesPanel";
 import { SupportChat } from "./SupportChat";
 import { TicketsPanel } from "./TicketsPanel";
-import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor } from "lucide-react";
+import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor, Ticket } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
+import { CouponsPanel } from "./CouponsPanel";
 
-type View = "home" | "addresses" | "ai" | "support";
+type View = "home" | "addresses" | "ai" | "support" | "coupons";
 
 export function ProfilePanel({ userId }: { userId: string }) {
   const [view, setView] = useState<View>("home");
@@ -33,6 +34,7 @@ export function ProfilePanel({ userId }: { userId: string }) {
         {view === "addresses" && <AddressesPanel userId={userId} />}
         {view === "ai" && <SupportChat />}
         {view === "support" && <TicketsPanel userId={userId} />}
+        {view === "coupons" && <CouponsPanel userId={userId} />}
       </div>
     );
   }
@@ -51,6 +53,7 @@ export function ProfilePanel({ userId }: { userId: string }) {
 
       <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
         <ProfileRow icon={<MapPin className="h-5 w-5 text-mada-red" />} label="Mes adresses" onClick={() => setView("addresses")} />
+        <ProfileRow icon={<Ticket className="h-5 w-5 text-mada-green" />} label="Mes coupons" onClick={() => setView("coupons")} />
         <ProfileRow icon={<Sparkles className="h-5 w-5 text-mada-green" />} label="IA Assistant" onClick={() => setView("ai")} />
         <ProfileRow icon={<LifeBuoy className="h-5 w-5 text-mada-red" />} label="Centre d'aide / Support" onClick={() => setView("support")} />
       </div>
