@@ -29,6 +29,20 @@ function CartPage() {
   const [address, setAddress] = useState<AddressRow | null>(null);
   const [quotes, setQuotes] = useState<Record<string, Quote | null>>({});
   const [paying, setPaying] = useState(false);
+  const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("coupons" as any)
+      .select("code,percent")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("percent", { ascending: false })
+      .limit(1)
+      .then((r) => setCoupon(((r.data ?? [])[0] as any) ?? null));
+  }, [user]);
 
   function reload() { setItems(getCart()); }
   useEffect(() => {
