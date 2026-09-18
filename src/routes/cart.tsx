@@ -140,6 +140,17 @@ function CartPage() {
 
         {items.length > 0 && user && (
           <>
+            {coupon && (
+              <div className="flex items-center gap-3 rounded-2xl border border-mada-green/40 bg-mada-green/10 p-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mada-green text-primary-foreground text-xs font-black">
+                  -{coupon.percent}%
+                </div>
+                <div className="min-w-0 text-xs">
+                  <div className="font-black">Coupon fidélité {coupon.code}</div>
+                  <div className="text-muted-foreground">Appliqué automatiquement au paiement sur les produits éligibles.</div>
+                </div>
+              </div>
+            )}
             <AddressSelector userId={user.id} value={address?.id ?? null} onChange={setAddress} />
             {vendors.map((v) => (
               <ShippingQuoteCard
