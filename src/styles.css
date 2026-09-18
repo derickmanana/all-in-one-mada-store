@@ -39,6 +39,13 @@
   --color-mada-red: var(--mada-red);
   --color-mada-green: var(--mada-green);
   --color-mada-white: var(--mada-white);
+  --color-footer: var(--footer-bg);
+  --color-footer-foreground: var(--footer-foreground);
+  --color-footer-muted: var(--footer-muted);
+  --color-footer-card: var(--footer-card);
+  --color-footer-card-hover: var(--footer-card-hover);
+  --color-footer-border: var(--footer-border);
+  --color-footer-border-hover: var(--footer-border-hover);
   --font-display: var(--font-display);
 }
 
