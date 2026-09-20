@@ -77,16 +77,23 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
         toast.success("Connecté avec succès");
         navigate({ to: dashboardPathForRole(role) });
       } else {
+        if (!allAccepted) throw new Error("Veuillez accepter les conditions obligatoires");
         const metadata =
           variant === "vendeur"
             ? { role: "vendeur", shop_name: shopName, phone }
             : { role: "client", full_name: fullName, phone, address };
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: metadata, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        if (signUpData.user && signUpData.session) {
+          await recordAcceptances(
+            signUpData.user.id,
+            LEGAL_CHECKS.map((c) => c.key),
+          );
+        }
         toast.success(
           variant === "vendeur"
             ? "Compte créé. En attente de validation par l'admin."
