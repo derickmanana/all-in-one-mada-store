@@ -3,7 +3,19 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { dashboardPathForRole, type AppRole } from "@/lib/auth";
-import { ArrowLeft } from "lucide-react";
+import { recordAcceptances } from "@/lib/legal-acceptance";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+
+const LEGAL_CHECKS = [
+  { key: "cgu", slug: "cgu", label: "J'ai lu et j'accepte les", link: "CGU" },
+  { key: "cgv", slug: "cgv", label: "J'ai lu et j'accepte les", link: "CGV" },
+  {
+    key: "confidentialite",
+    slug: "confidentialite",
+    label: "J'ai pris connaissance de la",
+    link: "Politique de Confidentialité",
+  },
+] as const;
 
 interface Props {
   variant: "client" | "vendeur";
@@ -29,6 +41,15 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
 
   // vendor signup
   const [shopName, setShopName] = useState("");
+
+  // legal acceptance
+  const [accepted, setAccepted] = useState<Record<string, boolean>>({
+    cgu: false,
+    cgv: false,
+    confidentialite: false,
+  });
+  const allAccepted = LEGAL_CHECKS.every((c) => accepted[c.key]);
+
 
   const accentBtn =
     accent === "red"
@@ -56,16 +77,23 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
         toast.success("Connecté avec succès");
         navigate({ to: dashboardPathForRole(role) });
       } else {
+        if (!allAccepted) throw new Error("Veuillez accepter les conditions obligatoires");
         const metadata =
           variant === "vendeur"
             ? { role: "vendeur", shop_name: shopName, phone }
             : { role: "client", full_name: fullName, phone, address };
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: metadata, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        if (signUpData.user && signUpData.session) {
+          await recordAcceptances(
+            signUpData.user.id,
+            LEGAL_CHECKS.map((c) => c.key),
+          );
+        }
         toast.success(
           variant === "vendeur"
             ? "Compte créé. En attente de validation par l'admin."
@@ -188,9 +216,45 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
               />
             </Field>
 
+            {mode === "signup" && (
+              <div className="space-y-2.5 rounded-xl border border-border bg-muted/40 p-3.5">
+                {LEGAL_CHECKS.map((c) => (
+                  <label key={c.key} className="flex items-start gap-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!accepted[c.key]}
+                      onChange={(e) =>
+                        setAccepted((s) => ({ ...s, [c.key]: e.target.checked }))
+                      }
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-mada-green)]"
+                    />
+                    <span className="min-w-0 flex-1 leading-snug">
+                      {c.label}{" "}
+                      <Link
+                        to="/legal/$slug"
+                        params={{ slug: c.slug }}
+                        target="_blank"
+                        className="inline-flex items-center gap-1 font-bold text-mada-green underline underline-offset-2"
+                      >
+                        {c.link}
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </span>
+                  </label>
+                ))}
+                <Link
+                  to="/legal"
+                  target="_blank"
+                  className="block pt-1 text-xs text-muted-foreground underline underline-offset-2"
+                >
+                  Voir tous les documents juridiques
+                </Link>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === "signup" && !allAccepted)}
               className={`w-full rounded-xl ${accentBtn} px-6 py-3.5 text-base font-bold text-primary-foreground transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {loading ? "Patientez..." : mode === "login" ? "Se connecter" : "Créer mon compte"}

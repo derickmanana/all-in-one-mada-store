@@ -4,12 +4,13 @@ import { useAuth } from "@/lib/auth";
 import { AddressesPanel } from "./AddressesPanel";
 import { SupportChat } from "./SupportChat";
 import { TicketsPanel } from "./TicketsPanel";
-import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor, Ticket } from "lucide-react";
+import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor, Ticket, Scale } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 import { CouponsPanel } from "./CouponsPanel";
+import { LegalPanel } from "./LegalPanel";
 
-type View = "home" | "addresses" | "ai" | "support" | "coupons";
+type View = "home" | "addresses" | "ai" | "support" | "coupons" | "legal";
 
 export function ProfilePanel({ userId }: { userId: string }) {
   const [view, setView] = useState<View>("home");
@@ -35,6 +36,7 @@ export function ProfilePanel({ userId }: { userId: string }) {
         {view === "ai" && <SupportChat />}
         {view === "support" && <TicketsPanel userId={userId} />}
         {view === "coupons" && <CouponsPanel userId={userId} />}
+        {view === "legal" && <LegalPanel userId={userId} />}
       </div>
     );
   }
@@ -56,6 +58,7 @@ export function ProfilePanel({ userId }: { userId: string }) {
         <ProfileRow icon={<Ticket className="h-5 w-5 text-mada-green" />} label="Mes coupons" onClick={() => setView("coupons")} />
         <ProfileRow icon={<Sparkles className="h-5 w-5 text-mada-green" />} label="IA Assistant" onClick={() => setView("ai")} />
         <ProfileRow icon={<LifeBuoy className="h-5 w-5 text-mada-red" />} label="Centre d'aide / Support" onClick={() => setView("support")} />
+        <ProfileRow icon={<Scale className="h-5 w-5 text-mada-green" />} label="Informations légales" onClick={() => setView("legal")} />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">

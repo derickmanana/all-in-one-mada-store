@@ -6,6 +6,7 @@ import { VendorProductsManager } from "@/components/madastore/VendorProductsMana
 import { OrdersList } from "@/components/madastore/OrdersList";
 import { VendorWalletPanel } from "@/components/madastore/VendorWalletPanel";
 import { VendorPickupForm } from "@/components/madastore/VendorPickupForm";
+import { VendorTermsGate } from "@/components/madastore/VendorTermsGate";
 import { MessagesPanel } from "@/components/madastore/MessagesPanel";
 import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { SupportChat } from "@/components/madastore/SupportChat";
@@ -60,16 +61,20 @@ function VendeurPage() {
           ❌ Compte rejeté. Ouvrez un ticket pour contester.
         </div>
       )}
-      <TabNav tabs={TABS} active={tab} onChange={setTab} />
-      <div className="mt-2 pb-2">
-        {user && tab === "produits" && <VendorProductsManager vendorId={user.id} vendorActive={status === "actif"} />}
-        {user && tab === "commandes" && <OrdersList userId={user.id} role="vendeur" />}
-        {user && tab === "wallet" && <VendorWalletPanel userId={user.id} />}
-        {user && tab === "pickup" && <VendorPickupForm vendorId={user.id} />}
-        {user && tab === "messages" && <MessagesPanel userId={user.id} />}
-        {user && tab === "ia" && <SupportChat />}
-        {user && tab === "support" && <TicketsPanel userId={user.id} />}
-      </div>
+      {user && (
+        <VendorTermsGate userId={user.id}>
+          <TabNav tabs={TABS} active={tab} onChange={setTab} />
+          <div className="mt-2 pb-2">
+            {tab === "produits" && <VendorProductsManager vendorId={user.id} vendorActive={status === "actif"} />}
+            {tab === "commandes" && <OrdersList userId={user.id} role="vendeur" />}
+            {tab === "wallet" && <VendorWalletPanel userId={user.id} />}
+            {tab === "pickup" && <VendorPickupForm vendorId={user.id} />}
+            {tab === "messages" && <MessagesPanel userId={user.id} />}
+            {tab === "ia" && <SupportChat />}
+            {tab === "support" && <TicketsPanel userId={user.id} />}
+          </div>
+        </VendorTermsGate>
+      )}
     </ProtectedShell>
   );
 }
