@@ -216,9 +216,45 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
               />
             </Field>
 
+            {mode === "signup" && (
+              <div className="space-y-2.5 rounded-xl border border-border bg-muted/40 p-3.5">
+                {LEGAL_CHECKS.map((c) => (
+                  <label key={c.key} className="flex items-start gap-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!accepted[c.key]}
+                      onChange={(e) =>
+                        setAccepted((s) => ({ ...s, [c.key]: e.target.checked }))
+                      }
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-mada-green)]"
+                    />
+                    <span className="min-w-0 flex-1 leading-snug">
+                      {c.label}{" "}
+                      <Link
+                        to="/legal/$slug"
+                        params={{ slug: c.slug }}
+                        target="_blank"
+                        className="inline-flex items-center gap-1 font-bold text-mada-green underline underline-offset-2"
+                      >
+                        {c.link}
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </span>
+                  </label>
+                ))}
+                <Link
+                  to="/legal"
+                  target="_blank"
+                  className="block pt-1 text-xs text-muted-foreground underline underline-offset-2"
+                >
+                  Voir tous les documents juridiques
+                </Link>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === "signup" && !allAccepted)}
               className={`w-full rounded-xl ${accentBtn} px-6 py-3.5 text-base font-bold text-primary-foreground transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {loading ? "Patientez..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
