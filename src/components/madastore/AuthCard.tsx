@@ -3,7 +3,19 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { dashboardPathForRole, type AppRole } from "@/lib/auth";
-import { ArrowLeft } from "lucide-react";
+import { recordAcceptances } from "@/lib/legal-acceptance";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+
+const LEGAL_CHECKS = [
+  { key: "cgu", slug: "cgu", label: "J'ai lu et j'accepte les", link: "CGU" },
+  { key: "cgv", slug: "cgv", label: "J'ai lu et j'accepte les", link: "CGV" },
+  {
+    key: "confidentialite",
+    slug: "confidentialite",
+    label: "J'ai pris connaissance de la",
+    link: "Politique de Confidentialité",
+  },
+] as const;
 
 interface Props {
   variant: "client" | "vendeur";

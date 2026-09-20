@@ -16,6 +16,8 @@ import { Route as ClientRouteImport } from './routes/client'
 import { Route as VendeurRouteImport } from './routes/vendeur'
 import { Route as AuthClientRouteImport } from './routes/auth/client'
 import { Route as AuthVendeurRouteImport } from './routes/auth/vendeur'
+import { Route as LegalIndexRouteImport } from './routes/legal/index'
+import { Route as LegalSlugRouteImport } from './routes/legal/$slug'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
 import { Route as OrderIdTrackingRouteImport } from './routes/order.$id.tracking'
@@ -55,6 +57,16 @@ const AuthVendeurRoute = AuthVendeurRouteImport.update({
   path: '/auth/vendeur',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalIndexRoute = LegalIndexRouteImport.update({
+  id: '/legal/',
+  path: '/legal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalSlugRoute = LegalSlugRouteImport.update({
+  id: '/legal/$slug',
+  path: '/legal/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductIdRoute = ProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
@@ -79,7 +91,9 @@ export interface FileRoutesByFullPath {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/legal/$slug': typeof LegalSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/legal/': typeof LegalIndexRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
@@ -91,7 +105,9 @@ export interface FileRoutesByTo {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/legal/$slug': typeof LegalSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/legal': typeof LegalIndexRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
@@ -104,7 +120,9 @@ export interface FileRoutesById {
   '/vendeur': typeof VendeurRoute
   '/auth/client': typeof AuthClientRoute
   '/auth/vendeur': typeof AuthVendeurRoute
+  '/legal/$slug': typeof LegalSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/legal/': typeof LegalIndexRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/order/$id/tracking': typeof OrderIdTrackingRoute
 }
@@ -118,7 +136,9 @@ export interface FileRouteTypes {
     | '/vendeur'
     | '/auth/client'
     | '/auth/vendeur'
+    | '/legal/$slug'
     | '/product/$id'
+    | '/legal/'
     | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   fileRoutesByTo: FileRoutesByTo
@@ -130,7 +150,9 @@ export interface FileRouteTypes {
     | '/vendeur'
     | '/auth/client'
     | '/auth/vendeur'
+    | '/legal/$slug'
     | '/product/$id'
+    | '/legal'
     | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   id:
@@ -142,7 +164,9 @@ export interface FileRouteTypes {
     | '/vendeur'
     | '/auth/client'
     | '/auth/vendeur'
+    | '/legal/$slug'
     | '/product/$id'
+    | '/legal/'
     | '/oauth/google-drive/return'
     | '/order/$id/tracking'
   fileRoutesById: FileRoutesById
@@ -155,7 +179,9 @@ export interface RootRouteChildren {
   VendeurRoute: typeof VendeurRoute
   AuthClientRoute: typeof AuthClientRoute
   AuthVendeurRoute: typeof AuthVendeurRoute
+  LegalSlugRoute: typeof LegalSlugRoute
   ProductIdRoute: typeof ProductIdRoute
+  LegalIndexRoute: typeof LegalIndexRoute
   OauthGoogleDriveReturnRoute: typeof OauthGoogleDriveReturnRoute
   OrderIdTrackingRoute: typeof OrderIdTrackingRoute
 }
@@ -211,6 +237,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVendeurRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/': {
+      id: '/legal/'
+      path: '/legal'
+      fullPath: '/legal/'
+      preLoaderRoute: typeof LegalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/$slug': {
+      id: '/legal/$slug'
+      path: '/legal/$slug'
+      fullPath: '/legal/$slug'
+      preLoaderRoute: typeof LegalSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$id': {
       id: '/product/$id'
       path: '/product/$id'
@@ -243,7 +283,9 @@ const rootRouteChildren: RootRouteChildren = {
   VendeurRoute: VendeurRoute,
   AuthClientRoute: AuthClientRoute,
   AuthVendeurRoute: AuthVendeurRoute,
+  LegalSlugRoute: LegalSlugRoute,
   ProductIdRoute: ProductIdRoute,
+  LegalIndexRoute: LegalIndexRoute,
   OauthGoogleDriveReturnRoute: OauthGoogleDriveReturnRoute,
   OrderIdTrackingRoute: OrderIdTrackingRoute,
 }
