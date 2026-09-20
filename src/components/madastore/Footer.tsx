@@ -151,6 +151,26 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Legal */}
+        <div className="mt-12 flex flex-col items-center gap-4">
+          <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-footer-muted">
+            Informations légales
+          </h3>
+          <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {LEGAL_DOCS.map((d) => (
+              <li key={d.slug}>
+                <Link
+                  to="/legal/$slug"
+                  params={{ slug: d.slug }}
+                  className="text-xs font-semibold text-footer-muted transition-colors hover:text-mada-green"
+                >
+                  {d.icon} {d.short}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-footer-border pt-6 text-center sm:flex-row sm:text-left">
           <p className="text-xs text-footer-muted">
