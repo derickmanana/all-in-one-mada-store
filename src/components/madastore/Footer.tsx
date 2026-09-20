@@ -1,4 +1,6 @@
 import { Phone, Mail, MessageCircle, Facebook, Heart, ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 const CONTACTS = [
   {
