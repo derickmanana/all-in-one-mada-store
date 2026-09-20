@@ -6,6 +6,7 @@ import { VendorProductsManager } from "@/components/madastore/VendorProductsMana
 import { OrdersList } from "@/components/madastore/OrdersList";
 import { VendorWalletPanel } from "@/components/madastore/VendorWalletPanel";
 import { VendorPickupForm } from "@/components/madastore/VendorPickupForm";
+import { VendorTermsGate } from "@/components/madastore/VendorTermsGate";
 import { MessagesPanel } from "@/components/madastore/MessagesPanel";
 import { TicketsPanel } from "@/components/madastore/TicketsPanel";
 import { SupportChat } from "@/components/madastore/SupportChat";
