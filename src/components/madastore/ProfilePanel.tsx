@@ -4,12 +4,13 @@ import { useAuth } from "@/lib/auth";
 import { AddressesPanel } from "./AddressesPanel";
 import { SupportChat } from "./SupportChat";
 import { TicketsPanel } from "./TicketsPanel";
-import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor, Ticket } from "lucide-react";
+import { MapPin, Sparkles, LifeBuoy, LogOut, User, ChevronRight, ArrowLeft, Moon, Sun, Monitor, Ticket, Scale } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 import { CouponsPanel } from "./CouponsPanel";
+import { LegalPanel } from "./LegalPanel";
 
-type View = "home" | "addresses" | "ai" | "support" | "coupons";
+type View = "home" | "addresses" | "ai" | "support" | "coupons" | "legal";
 
 export function ProfilePanel({ userId }: { userId: string }) {
   const [view, setView] = useState<View>("home");
