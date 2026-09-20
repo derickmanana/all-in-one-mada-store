@@ -42,6 +42,15 @@ export function AuthCard({ variant, title, subtitle, accent, icon }: Props) {
   // vendor signup
   const [shopName, setShopName] = useState("");
 
+  // legal acceptance
+  const [accepted, setAccepted] = useState<Record<string, boolean>>({
+    cgu: false,
+    cgv: false,
+    confidentialite: false,
+  });
+  const allAccepted = LEGAL_CHECKS.every((c) => accepted[c.key]);
+
+
   const accentBtn =
     accent === "red"
       ? "bg-gradient-red shadow-glow-red"
