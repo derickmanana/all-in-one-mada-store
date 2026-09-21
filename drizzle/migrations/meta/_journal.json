@@ -8,6 +8,20 @@
       "when": 1789796896122,
       "tag": "0000_create_legal_acceptances",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789967523780,
+      "tag": "0001_place_order_with_coupon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789967564606,
+      "tag": "0002_fix_place_order_v3_coupon_vars",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,10 @@ export type CartItem = {
   qty: number;
   color?: string | null;
   size?: string | null;
+  /** unité / pointure / autre variante */
+  unit?: string | null;
+  /** sélectionné pour le paiement (défaut: true) */
+  selected?: boolean;
 };
 
 const KEY = "dago_cart";
@@ -18,7 +22,9 @@ function emit() {
 export function getCart(): CartItem[] {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+    const list = raw ? (JSON.parse(raw) as CartItem[]) : [];
+    // rétro-compatibilité : les anciens articles n'ont pas de champ "selected"
+    return list.map((i) => ({ ...i, selected: i.selected !== false }));
   } catch {
     return [];
   }
@@ -32,18 +38,57 @@ export function saveCart(items: CartItem[]) {
 export function addToCart(item: CartItem) {
   const cart = getCart();
   const idx = cart.findIndex(
-    (c) => c.product_id === item.product_id && c.color === item.color && c.size === item.size,
+    (c) =>
+      c.product_id === item.product_id &&
+      (c.color ?? null) === (item.color ?? null) &&
+      (c.size ?? null) === (item.size ?? null) &&
+      (c.unit ?? null) === (item.unit ?? null),
   );
   if (idx >= 0) cart[idx].qty += item.qty;
-  else cart.push(item);
+  else cart.push({ ...item, selected: true });
   saveCart(cart);
 }
 
 export function updateQty(index: number, qty: number) {
   const cart = getCart();
+  if (!cart[index]) return;
   if (qty <= 0) cart.splice(index, 1);
   else cart[index].qty = qty;
   saveCart(cart);
+}
+
+export function updateItem(index: number, patch: Partial<CartItem>) {
+  const cart = getCart();
+  if (!cart[index]) return;
+  cart[index] = { ...cart[index], ...patch };
+  saveCart(cart);
+}
+
+export function removeItem(index: number) {
+  const cart = getCart();
+  cart.splice(index, 1);
+  saveCart(cart);
+}
+
+export function toggleSelected(index: number) {
+  const cart = getCart();
+  if (!cart[index]) return;
+  cart[index].selected = cart[index].selected === false;
+  saveCart(cart);
+}
+
+export function setAllSelected(selected: boolean) {
+  saveCart(getCart().map((i) => ({ ...i, selected })));
+}
+
+/** Retire du panier uniquement les articles passés en paramètre (par index) */
+export function removeIndexes(indexes: number[]) {
+  const set = new Set(indexes);
+  saveCart(getCart().filter((_, i) => !set.has(i)));
+}
+
+export function selectedItems(items: CartItem[]): CartItem[] {
+  return items.filter((i) => i.selected !== false);
 }
 
 export function clearCart() {
