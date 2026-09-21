@@ -1026,6 +1026,20 @@ export type Database = {
             }
             Returns: string
           }
+      place_order_v3: {
+        Args: {
+          _address: string
+          _address_id?: string
+          _coupon_id?: string
+          _delivery_days_max?: number
+          _delivery_days_min?: number
+          _delivery_fee?: number
+          _delivery_km?: number
+          _product_id: string
+          _quantity: number
+        }
+        Returns: string
+      }
       request_withdrawal: {
         Args: {
           _account: string
