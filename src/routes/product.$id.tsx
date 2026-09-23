@@ -8,7 +8,8 @@ import { addToCart } from "@/lib/cart";
 import { AddressSelector } from "@/components/madastore/AddressSelector";
 import { ShippingQuoteCard, type Quote } from "@/components/madastore/ShippingQuoteCard";
 import type { AddressRow } from "@/components/madastore/AddressForm";
-import { ArrowLeft, MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
+import { MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
+import { BackButton } from "@/components/madastore/BackButton";
 
 export const Route = createFileRoute("/product/$id")({
   component: ProductPage,
@@ -193,7 +194,7 @@ function ProductPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur px-4 py-3">
-        <Link to={dashboardPathForRole(role)} className="rounded-lg p-1 hover:bg-muted"><ArrowLeft className="h-5 w-5" /></Link>
+        <BackButton fallback={dashboardPathForRole(role)} />
         <h1 className="text-sm font-black truncate flex-1">{p.title}</h1>
         <Link to="/cart" className="rounded-lg p-1 hover:bg-muted"><ShoppingCart className="h-5 w-5" /></Link>
       </header>

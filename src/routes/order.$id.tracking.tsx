@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { loadGoogleMaps } from "@/lib/maps";
 import { ProtectedShell } from "@/components/madastore/ProtectedShell";
 import { formatMGA } from "@/components/madastore/Money";
-import { ArrowLeft, Truck, MapPin, Package, Clock, Pencil, Save, X } from "lucide-react";
+import { Truck, MapPin, Package, Clock, Pencil, Save, X } from "lucide-react";
+import { BackButton } from "@/components/madastore/BackButton";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -174,9 +175,7 @@ function TrackingPage() {
   return (
     <ProtectedShell expectedRole={(role ?? "client") as any} title="Suivi de livraison">
       <div className="mb-3 flex items-center justify-between">
-        <Link to={backLink} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Retour
-        </Link>
+        <BackButton fallback={backLink} label="Retour" className="text-muted-foreground hover:text-foreground" />
         {isVendor && (
           <button onClick={() => setEditOpen(true)} className="inline-flex items-center gap-1 rounded-lg bg-mada-green px-3 py-1.5 text-xs font-bold text-secondary-foreground">
             <Pencil className="h-3.5 w-3.5" /> Modifier planning
