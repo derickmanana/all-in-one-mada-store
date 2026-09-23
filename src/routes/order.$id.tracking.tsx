@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { loadGoogleMaps } from "@/lib/maps";
 import { ProtectedShell } from "@/components/madastore/ProtectedShell";
 import { formatMGA } from "@/components/madastore/Money";
-import { ArrowLeft, Truck, MapPin, Package, Clock, Pencil, Save, X } from "lucide-react";
+import { Truck, MapPin, Package, Clock, Pencil, Save, X } from "lucide-react";
+import { BackButton } from "@/components/madastore/BackButton";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
