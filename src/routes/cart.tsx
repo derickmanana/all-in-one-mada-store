@@ -86,7 +86,7 @@ function CartPage() {
       .gt("expires_at", new Date().toISOString())
       .order("percent", { ascending: false })
       .limit(20)
-      .then((r) => setCoupons(((r.data ?? []) as unknown as Coupon[]) ?? []));
+      .then((r) => setCoupons((r.data ?? []) as unknown as Coupon[]));
   }, [user]);
 
   // Infos produits (stock, variantes, catégorie) pour les articles du panier
