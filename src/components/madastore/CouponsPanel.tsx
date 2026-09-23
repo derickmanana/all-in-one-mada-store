@@ -103,13 +103,27 @@ export function CouponsPanel({ userId }: { userId: string }) {
               <div className="truncate text-sm font-black">{target}</div>
               <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{c.code}</div>
               {c.reason && <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{c.reason}</div>}
-              <div className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold">
-                {spent ? (
-                  <><CheckCircle2 className="h-3 w-3 text-mada-green" /> Utilisé</>
-                ) : expired ? (
-                  <><Clock className="h-3 w-3" /> Expiré</>
-                ) : (
-                  <><Clock className="h-3 w-3 text-mada-green" /> Expire dans {daysLeft(c.expires_at)} j</>
+              <div className="mt-1.5 flex items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1 text-[11px] font-bold">
+                  {spent ? (
+                    <><CheckCircle2 className="h-3 w-3 text-mada-green" /> Utilisé</>
+                  ) : expired ? (
+                    <><Clock className="h-3 w-3" /> Expiré</>
+                  ) : (
+                    <><Clock className="h-3 w-3 text-mada-green" /> Expire dans {daysLeft(c.expires_at)} j</>
+                  )}
+                </div>
+                {!inactive && (
+                  <button
+                    onClick={() => {
+                      setSelectedCouponId(c.id);
+                      toast.success(`Coupon ${c.code} sélectionné. Appliquez-le dans le panier.`);
+                      navigate({ to: "/cart" });
+                    }}
+                    className="rounded-full bg-mada-red px-4 py-1.5 text-xs font-black text-primary-foreground"
+                  >
+                    USE
+                  </button>
                 )}
               </div>
             </div>
