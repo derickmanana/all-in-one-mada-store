@@ -8,7 +8,8 @@ import { addToCart } from "@/lib/cart";
 import { AddressSelector } from "@/components/madastore/AddressSelector";
 import { ShippingQuoteCard, type Quote } from "@/components/madastore/ShippingQuoteCard";
 import type { AddressRow } from "@/components/madastore/AddressForm";
-import { ArrowLeft, MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
+import { MessageCircle, ShoppingBag, Heart, Send, ShoppingCart, X, Minus, Plus } from "lucide-react";
+import { BackButton } from "@/components/madastore/BackButton";
 
 export const Route = createFileRoute("/product/$id")({
   component: ProductPage,
