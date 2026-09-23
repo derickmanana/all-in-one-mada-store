@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { setSelectedCouponId } from "@/lib/coupon";
 import { Ticket, Clock, CheckCircle2 } from "lucide-react";
 
 type CouponRow = {
