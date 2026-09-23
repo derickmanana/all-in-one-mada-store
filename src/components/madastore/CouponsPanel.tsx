@@ -22,6 +22,7 @@ function daysLeft(iso: string) {
 }
 
 export function CouponsPanel({ userId }: { userId: string }) {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<CouponRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
