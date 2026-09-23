@@ -174,9 +174,7 @@ function TrackingPage() {
   return (
     <ProtectedShell expectedRole={(role ?? "client") as any} title="Suivi de livraison">
       <div className="mb-3 flex items-center justify-between">
-        <Link to={backLink} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Retour
-        </Link>
+        <BackButton fallback={backLink} label="Retour" className="text-muted-foreground hover:text-foreground" />
         {isVendor && (
           <button onClick={() => setEditOpen(true)} className="inline-flex items-center gap-1 rounded-lg bg-mada-green px-3 py-1.5 text-xs font-bold text-secondary-foreground">
             <Pencil className="h-3.5 w-3.5" /> Modifier planning
